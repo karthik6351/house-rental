@@ -1,0 +1,27 @@
+{
+    "name": "house-rental",
+    "version": "1.0.0",
+    "description": "House Rental Platform - Full Stack Application",
+    "private": true,
+    "scripts": {
+        "install:all": "npm install && cd frontend && npm install && cd ../backend && npm install",
+        "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+        "dev:frontend": "cd frontend && npm run dev",
+        "dev:backend": "cd backend && npm run dev",
+        "start": "concurrently \"npm run start:backend\" \"npm run start:frontend\"",
+        "start:frontend": "cd frontend && npm start",
+        "start:backend": "cd backend && npm start",
+        "build": "cd frontend && npm run build",
+        "clean": "rimraf node_modules frontend/node_modules backend/node_modules"
+    },
+    "keywords": [
+        "house-rental",
+        "property-management",
+        "real-estate"
+    ],
+    "author": "karthik6351",
+    "license": "MIT",
+    "devDependencies": {
+        "concurrently": "^8.2.2"
+    }
+}

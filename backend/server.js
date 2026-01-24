@@ -132,14 +132,22 @@ app.use((req, res) => {
 // Start server
 const PORT = process.env.PORT || 5000;
 
-server.listen(PORT, () => {
-    console.log(`🚀 Server running on port ${PORT}`);
-    console.log(`📝 Environment: ${process.env.NODE_ENV}`);
-    console.log(`🌐 Frontend URL: ${process.env.FRONTEND_URL}`);
-});
+if (require.main === module) {
+    server.listen(PORT, () => {
+        console.log(`🚀 Server running on port ${PORT}`);
+        console.log(`📝 Environment: ${process.env.NODE_ENV}`);
+        console.log(`🌐 Frontend URL: ${process.env.FRONTEND_URL}`);
+    });
+}
 
 // Handle unhandled promise rejections
 process.on('unhandledRejection', (err) => {
     console.error('❌ Unhandled Rejection:', err);
-    server.close(() => process.exit(1));
+    if (server.listening) {
+        server.close(() => process.exit(1));
+    } else {
+        process.exit(1);
+    }
 });
+
+module.exports = app;
