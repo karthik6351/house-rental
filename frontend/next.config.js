@@ -9,6 +9,17 @@ const nextConfig = {
                 port: '5000',
                 pathname: '/uploads/**',
             },
+            // Allow images from the configured API URL (Render backend)
+            ...(process.env.NEXT_PUBLIC_API_URL ? [{
+                protocol: 'https',
+                hostname: new URL(process.env.NEXT_PUBLIC_API_URL).hostname,
+                port: '',
+                pathname: '/uploads/**',
+            }] : []),
+            {
+                protocol: 'https',
+                hostname: '**',
+            },
         ],
     },
     env: {
