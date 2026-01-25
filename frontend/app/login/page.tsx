@@ -27,9 +27,13 @@ export default function LoginPage() {
         setError('');
 
         try {
-            await login(formData.email, formData.password);
-            // Auth context will handle redirect based on role
-            router.push('/');
+            const user = await login(formData.email, formData.password);
+            // Redirect based on role immediately
+            if (user.role === 'owner') {
+                router.push('/owner/dashboard');
+            } else {
+                router.push('/tenant/search');
+            }
         } catch (err: any) {
             setError(err.response?.data?.message || err.message || 'Login failed');
         } finally {

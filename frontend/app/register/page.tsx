@@ -41,9 +41,13 @@ export default function RegisterPage() {
         }
 
         try {
-            await register(formData);
-            // Auth context will handle redirect based on role
-            router.push('/');
+            const user = await register(formData);
+            // Redirect based on role immediately
+            if (user.role === 'owner') {
+                router.push('/owner/dashboard');
+            } else {
+                router.push('/tenant/search');
+            }
         } catch (err: any) {
             setError(err.response?.data?.message || err.message || 'Registration failed');
         } finally {
