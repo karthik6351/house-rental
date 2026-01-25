@@ -31,7 +31,7 @@ export default function LoginPage() {
             // Auth context will handle redirect based on role
             router.push('/');
         } catch (err: any) {
-            setError(err.message);
+            setError(err.response?.data?.message || err.message || 'Login failed');
         } finally {
             setIsLoading(false);
         }

@@ -45,7 +45,7 @@ export default function RegisterPage() {
             // Auth context will handle redirect based on role
             router.push('/');
         } catch (err: any) {
-            setError(err.message);
+            setError(err.response?.data?.message || err.message || 'Registration failed');
         } finally {
             setIsLoading(false);
         }
@@ -82,8 +82,8 @@ export default function RegisterPage() {
                                 type="button"
                                 onClick={() => handleRoleChange('tenant')}
                                 className={`p-4 rounded-lg border-2 transition-all duration-200 ${formData.role === 'tenant'
-                                        ? 'border-primary-600 bg-primary-50 dark:bg-primary-900/20'
-                                        : 'border-gray-300 dark:border-gray-600 hover:border-primary-400'
+                                    ? 'border-primary-600 bg-primary-50 dark:bg-primary-900/20'
+                                    : 'border-gray-300 dark:border-gray-600 hover:border-primary-400'
                                     }`}
                             >
                                 <div className="text-center">
@@ -96,8 +96,8 @@ export default function RegisterPage() {
                                 type="button"
                                 onClick={() => handleRoleChange('owner')}
                                 className={`p-4 rounded-lg border-2 transition-all duration-200 ${formData.role === 'owner'
-                                        ? 'border-secondary-600 bg-secondary-50 dark:bg-secondary-900/20'
-                                        : 'border-gray-300 dark:border-gray-600 hover:border-secondary-400'
+                                    ? 'border-secondary-600 bg-secondary-50 dark:bg-secondary-900/20'
+                                    : 'border-gray-300 dark:border-gray-600 hover:border-secondary-400'
                                     }`}
                             >
                                 <div className="text-center">

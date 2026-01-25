@@ -47,7 +47,6 @@ This guide explains how to deploy the House Rental Platform:
 5.  Expand **Environment Variables** and add:
     - `NEXT_PUBLIC_API_URL`: `https://YOUR-BACKEND-URL.onrender.com/api` (Paste the Render URL + `/api`)
     - `NEXT_PUBLIC_SOCKET_URL`: `https://YOUR-BACKEND-URL.onrender.com` (Paste the Render URL)
-    - `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY`: *Your Google Maps API Key*
 6.  Click **Deploy**.
 7.  Wait for the build to complete. Once done, copy the **vercel.app URL** (e.g., `https://house-rent-frontend.vercel.app`).
 
