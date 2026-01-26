@@ -66,9 +66,9 @@ function DashboardContent() {
             <header className="bg-white dark:bg-gray-800 shadow-sm">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
                     <div className="flex justify-between items-center">
-                        <div>
-                            <h1 className="text-2xl font-bold gradient-text">Owner Dashboard</h1>
-                            <p className="text-gray-600 dark:text-gray-400 mt-1">Welcome back, {user?.name}</p>
+                        <div className="flex items-center gap-3">
+                            <img src="/logo.png" alt="Easy Rent" className="h-10 w-auto" />
+                            <p className="text-gray-600 dark:text-gray-400 text-sm hidden sm:block">Welcome back, {user?.name}</p>
                         </div>
                         <div className="flex gap-3">
                             <button
@@ -174,8 +174,8 @@ function DashboardContent() {
                                     )}
                                     <div className="absolute top-2 right-2">
                                         <span className={`px-3 py-1 rounded-full text-xs font-semibold ${property.available
-                                                ? 'bg-success-100 text-success-800'
-                                                : 'bg-gray-100 text-gray-800'
+                                            ? 'bg-success-100 text-success-800'
+                                            : 'bg-gray-100 text-gray-800'
                                             }`}>
                                             {property.available ? 'Available' : 'Unavailable'}
                                         </span>

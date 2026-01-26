@@ -71,6 +71,8 @@ const reverseGeocode = async (lat, lng) => {
 // @access  Private (Owner only)
 const createProperty = async (req, res) => {
     try {
+        console.log('Create Property Request Body:', req.body);
+        console.log('Create Property Files:', req.files ? req.files.length : 0);
         const {
             title,
             description,
@@ -97,6 +99,14 @@ const createProperty = async (req, res) => {
         if (providedLat && providedLng) {
             lat = parseFloat(providedLat);
             lng = parseFloat(providedLng);
+
+            // Check if coordinates are valid numbers
+            if (isNaN(lat) || isNaN(lng)) {
+                console.warn('Invalid coordinates provided, falling back to address geocoding');
+                const coords = await geocodeAddress(address);
+                lat = coords.lat;
+                lng = coords.lng;
+            }
         } else {
             const coords = await geocodeAddress(address);
             lat = coords.lat;

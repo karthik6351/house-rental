@@ -113,13 +113,14 @@ function EditPropertyContent() {
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
             <header className="bg-white dark:bg-gray-800 shadow-sm">
-                <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+                <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
                     <button
                         onClick={() => router.back()}
                         className="text-primary-600 hover:text-primary-700 font-semibold flex items-center gap-2"
                     >
                         ← Back to Dashboard
                     </button>
+                    <img src="/logo.png" alt="Easy Rent" className="h-8 w-auto" />
                 </div>
             </header>
 
