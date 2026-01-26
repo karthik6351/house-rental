@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { propertyAPI } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
+import PropertyMap from '@/components/PropertyMap';
 
 interface Property {
     _id: string;
@@ -16,6 +17,9 @@ interface Property {
     address: string;
     furnishing: string;
     images: string[];
+    location: {
+        coordinates: [number, number];
+    };
     owner: {
         _id: string;
         name: string;
@@ -27,15 +31,18 @@ function TenantSearchContent() {
     const { user, logout } = useAuth();
     const [properties, setProperties] = useState<Property[]>([]);
     const [isLoading, setIsLoading] = useState(false);
+    const [showMap, setShowMap] = useState(true);
+    const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
     const [filters, setFilters] = useState({
         minPrice: '',
         maxPrice: '',
         bedrooms: '',
         bathrooms: '',
         furnishing: '',
+        radius: '10',
     });
 
-    const fetchProperties = async () => {
+    const fetchProperties = async (useLocation = false) => {
         setIsLoading(true);
         try {
             const params: any = {};
@@ -44,6 +51,13 @@ function TenantSearchContent() {
             if (filters.bedrooms) params.bedrooms = filters.bedrooms;
             if (filters.bathrooms) params.bathrooms = filters.bathrooms;
             if (filters.furnishing) params.furnishing = filters.furnishing;
+
+            // Add location-based search
+            if (useLocation && userLocation) {
+                params.lat = userLocation.lat;
+                params.lng = userLocation.lng;
+                params.radius = filters.radius;
+            }
 
             const response = await propertyAPI.search(params);
             setProperties(response.data.properties);
@@ -73,8 +87,31 @@ function TenantSearchContent() {
             bedrooms: '',
             bathrooms: '',
             furnishing: '',
+            radius: '10',
         });
+        setUserLocation(null);
         setTimeout(fetchProperties, 100);
+    };
+
+    const handleUseMyLocation = () => {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const location = {
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude,
+                    };
+                    setUserLocation(location);
+                    fetchProperties(true);
+                },
+                (error) => {
+                    console.error('Error getting location:', error);
+                    alert('Unable to get your location. Please enable location services.');
+                }
+            );
+        } else {
+            alert('Geolocation is not supported by your browser');
+        }
     };
 
     return (
@@ -180,17 +217,55 @@ function TenantSearchContent() {
                                 <option value="unfurnished">Unfurnished</option>
                             </select>
                         </div>
+
+                        {userLocation && (
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    Search Radius (km)
+                                </label>
+                                <select
+                                    name="radius"
+                                    value={filters.radius}
+                                    onChange={handleFilterChange}
+                                    className="input-field text-sm"
+                                >
+                                    <option value="5">5 km</option>
+                                    <option value="10">10 km</option>
+                                    <option value="20">20 km</option>
+                                    <option value="50">50 km</option>
+                                </select>
+                            </div>
+                        )}
                     </div>
 
-                    <div className="flex gap-3 mt-6">
+                    <div className="flex gap-3 mt-6 flex-wrap">
                         <button onClick={handleSearch} className="btn-primary">
                             Search Properties
+                        </button>
+                        <button onClick={handleUseMyLocation} className="btn-outline">
+                            📍 Search Near Me
                         </button>
                         <button onClick={handleReset} className="btn-outline">
                             Reset Filters
                         </button>
+                        <button
+                            onClick={() => setShowMap(!showMap)}
+                            className="btn-outline ml-auto"
+                        >
+                            {showMap ? '📋 List View' : '🗺️ Map View'}
+                        </button>
                     </div>
                 </div>
+
+                {/* Map View */}
+                {showMap && properties.length > 0 && (
+                    <div className="mb-8">
+                        <PropertyMap
+                            properties={properties}
+                            center={userLocation || undefined}
+                        />
+                    </div>
+                )}
 
                 {/* Results */}
                 <div className="mb-4 flex justify-between items-center">

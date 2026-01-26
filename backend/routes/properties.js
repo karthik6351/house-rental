@@ -7,7 +7,8 @@ const {
     deleteProperty,
     toggleAvailability,
     searchProperties,
-    getProperty
+    getProperty,
+    getReverseGeocode
 } = require('../controllers/propertyController');
 const { authenticate, requireOwner, requireTenant } = require('../middleware/auth');
 const { upload, handleUploadError } = require('../middleware/upload');
@@ -39,6 +40,9 @@ router.patch('/:id/availability', authenticate, requireOwner, toggleAvailability
 
 // Tenant routes
 router.get('/search', authenticate, requireTenant, searchProperties);
+
+// Utility routes (both roles)
+router.get('/reverse-geocode', authenticate, getReverseGeocode);
 
 // Both roles
 router.get('/:id', authenticate, getProperty);

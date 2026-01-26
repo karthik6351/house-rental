@@ -34,6 +34,38 @@ const geocodeAddress = async (address) => {
     }
 };
 
+// Reverse geocode coordinates to address
+const reverseGeocode = async (lat, lng) => {
+    try {
+        const apiKey = process.env.GOOGLE_MAPS_API_KEY;
+
+        if (!apiKey || apiKey === 'your_google_maps_api_key_here') {
+            console.warn('⚠️  Google Maps API key not configured. Using default address.');
+            return 'Address not available';
+        }
+
+        const response = await axios.get(
+            `https://maps.googleapis.com/maps/api/geocode/json`,
+            {
+                params: {
+                    latlng: `${lat},${lng}`,
+                    key: apiKey
+                }
+            }
+        );
+
+        if (response.data.status === 'OK' && response.data.results.length > 0) {
+            return response.data.results[0].formatted_address;
+        }
+
+        throw new Error('Unable to reverse geocode coordinates');
+    } catch (error) {
+        console.error('Reverse geocoding error:', error.message);
+        throw new Error('Failed to get address from coordinates');
+    }
+};
+
+
 // @desc    Create new property
 // @route   POST /api/properties
 // @access  Private (Owner only)
@@ -47,7 +79,9 @@ const createProperty = async (req, res) => {
             bedrooms,
             bathrooms,
             area,
-            furnishing
+            furnishing,
+            lat: providedLat,
+            lng: providedLng
         } = req.body;
 
         // Validate required fields
@@ -58,8 +92,17 @@ const createProperty = async (req, res) => {
             });
         }
 
-        // Geocode address
-        const { lat, lng } = await geocodeAddress(address);
+        // Use provided coordinates or geocode address
+        let lat, lng;
+        if (providedLat && providedLng) {
+            lat = parseFloat(providedLat);
+            lng = parseFloat(providedLng);
+        } else {
+            const coords = await geocodeAddress(address);
+            lat = coords.lat;
+            lng = coords.lng;
+        }
+
 
         // Get uploaded image paths
         const images = req.files ? req.files.map(file => `/uploads/properties/${file.filename}`) : [];
@@ -422,6 +465,37 @@ const getProperty = async (req, res) => {
     }
 };
 
+// @desc    Get address from coordinates (Reverse Geocode)
+// @route   GET /api/properties/reverse-geocode
+// @access  Private
+const getReverseGeocode = async (req, res) => {
+    try {
+        const { lat, lng } = req.query;
+
+        if (!lat || !lng) {
+            return res.status(400).json({
+                success: false,
+                message: 'Latitude and longitude are required'
+            });
+        }
+
+        const address = await reverseGeocode(parseFloat(lat), parseFloat(lng));
+
+        res.status(200).json({
+            success: true,
+            address
+        });
+
+    } catch (error) {
+        console.error('Reverse geocode error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to get address from coordinates',
+            error: error.message
+        });
+    }
+};
+
 module.exports = {
     createProperty,
     getMyProperties,
@@ -429,5 +503,7 @@ module.exports = {
     deleteProperty,
     toggleAvailability,
     searchProperties,
-    getProperty
+    getProperty,
+    getReverseGeocode
 };
+

@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { propertyAPI } from '@/lib/api';
+import LocationPicker from '@/components/LocationPicker';
+
 
 function NewPropertyContent() {
     const router = useRouter();
@@ -20,6 +22,8 @@ function NewPropertyContent() {
         furnishing: 'unfurnished',
     });
     const [images, setImages] = useState<File[]>([]);
+    const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
+
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -41,6 +45,12 @@ function NewPropertyContent() {
         setImages(images.filter((_, i) => i !== index));
     };
 
+    const handleLocationSelect = (locationData: { lat: number; lng: number; address: string }) => {
+        setLocation({ lat: locationData.lat, lng: locationData.lng });
+        setFormData({ ...formData, address: locationData.address });
+    };
+
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
@@ -56,6 +66,12 @@ function NewPropertyContent() {
             data.append('bathrooms', formData.bathrooms);
             data.append('area', formData.area);
             data.append('furnishing', formData.furnishing);
+
+            // Add coordinates if location was selected from map
+            if (location) {
+                data.append('lat', location.lat.toString());
+                data.append('lng', location.lng.toString());
+            }
 
             images.forEach((image) => {
                 data.append('images', image);
@@ -126,9 +142,21 @@ function NewPropertyContent() {
                             />
                         </div>
 
+                        {/* Location Picker Map */}
                         <div>
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                Address *
+                                Property Location *
+                            </label>
+                            <LocationPicker
+                                onLocationSelect={handleLocationSelect}
+                                initialLocation={location || undefined}
+                                initialAddress={formData.address}
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Address * {location && <span className="text-green-600 text-xs">(Auto-filled from map)</span>}
                             </label>
                             <input
                                 type="text"
