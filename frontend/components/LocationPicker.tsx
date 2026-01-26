@@ -64,18 +64,22 @@ export default function LocationPicker({ onLocationSelect, initialLocation, init
     const fetchAddress = async (lat: number, lng: number) => {
         setIsLoadingAddress(true);
         try {
-            const token = localStorage.getItem('token');
-            const response = await axios.get(
-                `${process.env.NEXT_PUBLIC_API_URL}/properties/reverse-geocode`,
-                {
-                    params: { lat, lng },
-                    headers: { Authorization: `Bearer ${token}` },
-                }
-            );
+            // Use OpenStreetMap Nominatim for reverse geocoding
+            const response = await axios.get('https://nominatim.openstreetmap.org/reverse', {
+                params: {
+                    lat,
+                    lon: lng,
+                    format: 'json',
+                },
+            });
 
-            const fetchedAddress = response.data.address;
-            setAddress(fetchedAddress);
-            onLocationSelect({ lat, lng, address: fetchedAddress });
+            if (response.data && response.data.display_name) {
+                const fetchedAddress = response.data.display_name;
+                setAddress(fetchedAddress);
+                onLocationSelect({ lat, lng, address: fetchedAddress });
+            } else {
+                throw new Error('Address not found');
+            }
         } catch (error) {
             console.error('Failed to fetch address:', error);
             const fallbackAddress = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
