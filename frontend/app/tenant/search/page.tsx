@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { propertyAPI } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
-import PropertyMap from '@/components/PropertyMap';
+import dynamic from 'next/dynamic';
+const PropertyMap = dynamic(() => import('@/components/PropertyMap'), { ssr: false });
 
 interface Property {
     _id: string;

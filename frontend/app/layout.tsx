@@ -5,12 +5,18 @@ import { AuthProvider } from '@/contexts/AuthContext';
 
 const inter = Inter({ subsets: ['latin'] });
 
+export const viewport = {
+    themeColor: '#2563eb',
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 1,
+    userScalable: false,
+};
+
 export const metadata: Metadata = {
     title: 'Easy Rent - Find Your Perfect Home',
     description: 'Commercial house rental platform connecting property owners with tenants',
     manifest: '/manifest.json',
-    themeColor: '#2563eb',
-    viewport: 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0',
     appleWebApp: {
         capable: true,
         statusBarStyle: 'default',

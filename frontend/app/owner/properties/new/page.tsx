@@ -4,7 +4,8 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { propertyAPI } from '@/lib/api';
-import LocationPicker from '@/components/LocationPicker';
+import dynamic from 'next/dynamic';
+const LocationPicker = dynamic(() => import('@/components/LocationPicker'), { ssr: false });
 
 
 function NewPropertyContent() {
