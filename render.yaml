@@ -17,3 +17,4 @@ services:
         sync: false
       - key: FRONTEND_URL
         sync: false
+    autoDeploy: true
