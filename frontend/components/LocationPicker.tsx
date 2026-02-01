@@ -2,7 +2,8 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet';
-import axios from 'axios';
+import { propertyAPI } from '@/lib/api';
+// import axios from 'axios'; // We can remove axios if not used elsewhere, but keeping just in case.
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 
@@ -64,17 +65,11 @@ export default function LocationPicker({ onLocationSelect, initialLocation, init
     const fetchAddress = async (lat: number, lng: number) => {
         setIsLoadingAddress(true);
         try {
-            // Use OpenStreetMap Nominatim for reverse geocoding
-            const response = await axios.get('https://nominatim.openstreetmap.org/reverse', {
-                params: {
-                    lat,
-                    lon: lng,
-                    format: 'json',
-                },
-            });
+            // Use backend for reverse geocoding to avoid CORS and API key issues
+            const response = await propertyAPI.getReverseGeocode(lat, lng);
 
-            if (response.data && response.data.display_name) {
-                const fetchedAddress = response.data.display_name;
+            if (response.data && response.data.address) {
+                const fetchedAddress = response.data.address;
                 setAddress(fetchedAddress);
                 onLocationSelect({ lat, lng, address: fetchedAddress });
             } else {

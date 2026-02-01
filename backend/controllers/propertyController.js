@@ -40,7 +40,26 @@ const reverseGeocode = async (lat, lng) => {
         const apiKey = process.env.GOOGLE_MAPS_API_KEY;
 
         if (!apiKey || apiKey === 'your_google_maps_api_key_here') {
-            console.warn('⚠️  Google Maps API key not configured. Using default address.');
+            console.warn('⚠️  Google Maps API key not configured. Using Nominatim (OpenStreetMap).');
+            // Fallback to Nominatim
+            const response = await axios.get(
+                `https://nominatim.openstreetmap.org/reverse`,
+                {
+                    params: {
+                        lat: lat,
+                        lon: lng,
+                        format: 'json',
+                        addressdetails: 1
+                    },
+                    headers: {
+                        'User-Agent': 'HouseRentalApp/1.0'
+                    }
+                }
+            );
+
+            if (response.data && response.data.display_name) {
+                return response.data.display_name;
+            }
             return 'Address not available';
         }
 

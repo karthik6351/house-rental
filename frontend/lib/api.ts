@@ -59,6 +59,7 @@ export const propertyAPI = {
     toggleAvailability: (id: string) => api.patch(`/properties/${id}/availability`),
     search: (params: any) => api.get('/properties/search', { params }),
     getById: (id: string) => api.get(`/properties/${id}`),
+    getReverseGeocode: (lat: number, lng: number) => api.get('/properties/reverse-geocode', { params: { lat, lng } }),
 };
 
 export const chatAPI = {
