@@ -90,8 +90,11 @@ const reverseGeocode = async (lat, lng) => {
 // @access  Private (Owner only)
 const createProperty = async (req, res) => {
     try {
-        console.log('Create Property Request Body:', req.body);
-        console.log('Create Property Files:', req.files ? req.files.length : 0);
+        console.log('[DEBUG] Create Property Request');
+        console.log('User:', req.user);
+        console.log('Body:', JSON.stringify(req.body, null, 2));
+        console.log('Files:', req.files ? req.files.map(f => ({ name: f.originalname, size: f.size, mimetype: f.mimetype })) : 'No files');
+
         const {
             title,
             description,

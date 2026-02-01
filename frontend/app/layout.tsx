@@ -3,6 +3,8 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import { AuthProvider } from '@/contexts/AuthContext';
 
+import LeafletSetup from '@/components/LeafletSetup';
+
 const inter = Inter({ subsets: ['latin'] });
 
 export const viewport = {
@@ -37,6 +39,7 @@ export default function RootLayout({
         <html lang="en">
             <body className={inter.className}>
                 <AuthProvider>
+                    <LeafletSetup />
                     {children}
                 </AuthProvider>
             </body>
