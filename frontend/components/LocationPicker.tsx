@@ -206,9 +206,7 @@ export default function LocationPicker({ onLocationSelect, initialLocation, init
                 </p>
             </div>
 
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-                💡 Click on the map, drag the marker, or search for an address to set the property location
-            </p>
+
         </div>
     );
 }
