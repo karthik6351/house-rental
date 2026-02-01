@@ -22,6 +22,9 @@ export const metadata: Metadata = {
         statusBarStyle: 'default',
         title: 'Easy Rent',
     },
+    other: {
+        'mobile-web-app-capable': 'yes',
+    },
 };
 
 
