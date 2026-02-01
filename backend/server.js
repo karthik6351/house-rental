@@ -23,19 +23,70 @@ const io = socketIO(server, {
 connectDB();
 
 // Middleware
+// Middleware
+const allowedOrigins = [
+    'http://localhost:3000',
+    'https://easyrent1.vercel.app',
+    process.env.FRONTEND_URL
+].filter(Boolean);
+
 app.use(cors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: function (origin, callback) {
+        // Allow requests with no origin (like mobile apps or curl requests)
+        if (!origin) return callback(null, true);
+        if (allowedOrigins.indexOf(origin) !== -1 || allowedOrigins.some(o => origin.startsWith(o))) {
+            callback(null, true);
+        } else {
+            console.log('Blocked by CORS:', origin);
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
     credentials: true
 }));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Serve uploaded files
-app.use('/uploads', (req, res, next) => {
-    console.log(`[Static] Request for: ${req.url}`);
-    next();
-}, express.static(path.join(__dirname, 'uploads')));
+// Image serving route (GridFS)
+const mongoose = require('mongoose');
+
+// Create a separate connection for media
+const mediaConn = mongoose.createConnection(process.env.MONGODB_MEDIA_URI);
+let gfsBucket;
+
+mediaConn.once('open', () => {
+    console.log('✅ MongoDB Media Connected');
+    gfsBucket = new mongoose.mongo.GridFSBucket(mediaConn.db, {
+        bucketName: 'properties'
+    });
+});
+
+app.get('/uploads/properties/:filename', async (req, res) => {
+    try {
+        if (!gfsBucket) {
+            return res.status(500).json({ message: 'Media database not connected' });
+        }
+
+        const _id = req.params.id;
+        const file = await gfsBucket.find({ filename: req.params.filename }).toArray();
+
+        if (!file || file.length === 0) {
+            return res.status(404).json({ message: 'File not found' });
+        }
+
+        // Check if content-type is available
+        if (file[0].contentType) {
+            res.set('Content-Type', file[0].contentType);
+        }
+
+        const readStream = gfsBucket.openDownloadStreamByName(req.params.filename);
+        readStream.pipe(res);
+
+    } catch (error) {
+        console.error('Image streaming error:', error);
+        res.status(404).json({ message: 'Image not found' });
+    }
+});
 
 // Routes
 app.use('/api/auth', require('./routes/auth'));

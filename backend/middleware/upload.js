@@ -8,38 +8,36 @@ if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
 }
 
-// Configure storage
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        cb(null, uploadDir);
-    },
-    filename: function (req, file, cb) {
-        // Generate unique filename: timestamp-random-originalname
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        const ext = path.extname(file.originalname);
-        const name = path.basename(file.originalname, ext);
-        cb(null, `${name}-${uniqueSuffix}${ext}`);
+const { GridFsStorage } = require('multer-gridfs-storage');
+const crypto = require('crypto');
+
+// Create storage engine
+const storage = new GridFsStorage({
+    url: process.env.MONGODB_MEDIA_URI,
+    file: (req, file) => {
+        return new Promise((resolve, reject) => {
+            crypto.randomBytes(16, (err, buf) => {
+                if (err) {
+                    return reject(err);
+                }
+                const filename = buf.toString('hex') + path.extname(file.originalname);
+                const fileInfo = {
+                    filename: filename,
+                    bucketName: 'properties' // Collection name: properties.files, properties.chunks
+                };
+                resolve(fileInfo);
+            });
+        });
     }
 });
-
-// File filter - only allow images
-const fileFilter = (req, file, cb) => {
-    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-
-    if (allowedTypes.includes(file.mimetype)) {
-        cb(null, true);
-    } else {
-        cb(new Error('Invalid file type. Only JPEG, PNG, and WebP images are allowed.'), false);
-    }
-};
 
 // Configure multer
 const upload = multer({
     storage: storage,
     fileFilter: fileFilter,
     limits: {
-        fileSize: parseInt(process.env.MAX_FILE_SIZE) || 5 * 1024 * 1024, // 5MB default
-        files: 10 // Maximum 10 files
+        fileSize: parseInt(process.env.MAX_FILE_SIZE) || 5 * 1024 * 1024,
+        files: 10
     }
 });
 
