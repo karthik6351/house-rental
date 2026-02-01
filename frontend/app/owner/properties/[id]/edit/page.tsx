@@ -269,7 +269,7 @@ function EditPropertyContent() {
                                     {existingImages.map((image, index) => (
                                         <div key={index} className="relative">
                                             <img
-                                                src={`http://localhost:5000${image}`}
+                                                src={`${process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:5000'}${image}`}
                                                 alt={`Property ${index + 1}`}
                                                 className="w-full h-32 object-cover rounded-lg"
                                             />
