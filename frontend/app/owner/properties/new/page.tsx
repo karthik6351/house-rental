@@ -87,7 +87,10 @@ function NewPropertyContent() {
             await propertyAPI.create(data);
             router.push('/owner/dashboard');
         } catch (err: any) {
-            setError(err.response?.data?.message || 'Failed to create property');
+            const errorMessage = err.response?.data?.message || 'Failed to create property';
+            console.error('Submission Error:', err.response?.data);
+            setError(errorMessage);
+            alert(`Error: ${errorMessage}`);
         } finally {
             setIsLoading(false);
         }

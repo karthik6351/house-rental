@@ -51,8 +51,19 @@ function DraggableMarker({
         }
     }, [onDragEnd]);
 
-    return <Marker position={position} draggable={true} ref={markerRef} />;
+    return <Marker position={position} draggable={true} ref={markerRef} icon={customIcon} />;
 }
+
+// Custom marker icon
+const customIcon = new L.Icon({
+    iconUrl: '/images/leaflet/marker-icon.png',
+    iconRetinaUrl: '/images/leaflet/marker-icon-2x.png',
+    shadowUrl: '/images/leaflet/marker-shadow.png',
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowSize: [41, 41],
+});
 
 export default function LocationPicker({ onLocationSelect, initialLocation, initialAddress }: LocationPickerProps) {
     const [markerPosition, setMarkerPosition] = useState<[number, number]>(
