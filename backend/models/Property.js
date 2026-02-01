@@ -70,15 +70,15 @@ const propertySchema = new mongoose.Schema({
         type: Boolean,
         default: true
     },
-    images: [{
-        type: String,
+    images: {
+        type: [String],
         validate: {
             validator: function (v) {
                 return v.length <= 10;
             },
             message: 'Maximum 10 images allowed'
         }
-    }],
+    },
     createdAt: {
         type: Date,
         default: Date.now

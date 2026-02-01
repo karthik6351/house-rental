@@ -48,13 +48,9 @@ export const authAPI = {
 };
 
 export const propertyAPI = {
-    create: (formData: FormData) => api.post('/properties', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-    }),
+    create: (formData: FormData) => api.post('/properties', formData),
     getMyProperties: () => api.get('/properties/my-properties'),
-    update: (id: string, formData: FormData) => api.put(`/properties/${id}`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-    }),
+    update: (id: string, formData: FormData) => api.put(`/properties/${id}`, formData),
     delete: (id: string) => api.delete(`/properties/${id}`),
     toggleAvailability: (id: string) => api.patch(`/properties/${id}/availability`),
     search: (params: any) => api.get('/properties/search', { params }),
