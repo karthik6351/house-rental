@@ -2,7 +2,7 @@ services:
   - type: web
     name: house-rental-backend
     env: node
-    rootCommand: cd backend
+    rootDir: backend
     buildCommand: npm install
     startCommand: node server.js
     envVars:
@@ -10,4 +10,9 @@ services:
         value: 10000
       - key: NODE_ENV
         value: production
-    autoDeploy: true
+      - key: MONGODB_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: FRONTEND_URL
+        sync: false
