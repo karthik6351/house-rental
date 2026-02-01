@@ -286,7 +286,7 @@ function TenantSearchContent() {
                                 <div className="relative h-56 bg-gray-200 dark:bg-gray-700 rounded-lg overflow-hidden mb-4">
                                     {property.images[0] ? (
                                         <img
-                                            src={`${process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:5000'}${property.images[0]}`}
+                                            src={`${process.env.NEXT_PUBLIC_SOCKET_URL || 'https://house-rental-p61v.onrender.com'}${property.images[0]}`}
                                             alt={property.title}
                                             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                                         />
