@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet';
 import { propertyAPI } from '@/lib/api';
-// import axios from 'axios'; // We can remove axios if not used elsewhere, but keeping just in case.
+import axios from 'axios';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 
