@@ -78,6 +78,12 @@ function NewPropertyContent() {
                 data.append('images', image);
             });
 
+            // Debug logging
+            console.log('Submitting property data:');
+            for (let [key, value] of data.entries()) {
+                console.log(`${key}: ${value}`);
+            }
+
             await propertyAPI.create(data);
             router.push('/owner/dashboard');
         } catch (err: any) {

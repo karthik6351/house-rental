@@ -106,10 +106,14 @@ const createProperty = async (req, res) => {
         } = req.body;
 
         // Validate required fields
-        if (!title || !description || !address || !price || !bedrooms || !bathrooms || !area || !furnishing) {
+        const requiredFields = ['title', 'description', 'address', 'price', 'bedrooms', 'bathrooms', 'area', 'furnishing'];
+        const missingFields = requiredFields.filter(field => !req.body[field]);
+
+        if (missingFields.length > 0) {
+            console.log('Missing fields:', missingFields);
             return res.status(400).json({
                 success: false,
-                message: 'Please provide all required fields'
+                message: `Please provide all required fields: ${missingFields.join(', ')}`
             });
         }
 
