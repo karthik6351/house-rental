@@ -51,11 +51,31 @@ app.use(express.urlencoded({ extended: true }));
 const mongoose = require('mongoose');
 
 // Create a separate connection for media
-const mediaConn = mongoose.createConnection(process.env.MONGODB_MEDIA_URI);
+// Create a separate connection for media
+const mediaParams = {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+};
+
+const mediaUri = process.env.MONGODB_MEDIA_URI || process.env.MONGODB_URI;
+
+// Check if we have a valid URI before connecting
+if (!mediaUri) {
+    console.error('❌ Missing MongoDB URI for media storage');
+}
+
+const mediaConn = mongoose.createConnection(mediaUri, mediaParams);
 let gfsBucket;
 
-mediaConn.once('open', () => {
+mediaConn.on('connected', () => {
     console.log('✅ MongoDB Media Connected');
+});
+
+mediaConn.on('error', (err) => {
+    console.error('❌ MongoDB Media Connection Error:', err);
+});
+
+mediaConn.once('open', () => {
     gfsBucket = new mongoose.mongo.GridFSBucket(mediaConn.db, {
         bucketName: 'properties'
     });

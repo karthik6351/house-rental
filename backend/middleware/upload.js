@@ -13,7 +13,7 @@ const crypto = require('crypto');
 
 // Create storage engine
 const storage = new GridFsStorage({
-    url: process.env.MONGODB_MEDIA_URI,
+    url: process.env.MONGODB_MEDIA_URI || process.env.MONGODB_URI,
     file: (req, file) => {
         return new Promise((resolve, reject) => {
             crypto.randomBytes(16, (err, buf) => {

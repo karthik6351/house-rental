@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { propertyAPI } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
+import { getImageUrl } from '@/lib/urlUtils';
 
 interface Property {
     _id: string;
@@ -161,7 +162,7 @@ function DashboardContent() {
                                 <div className="relative h-48 bg-gray-200 dark:bg-gray-700 rounded-lg overflow-hidden mb-4">
                                     {property.images[0] ? (
                                         <img
-                                            src={`${process.env.NEXT_PUBLIC_SOCKET_URL || 'https://house-rental-p61v.onrender.com'}${property.images[0]}`}
+                                            src={getImageUrl(property.images[0])}
                                             alt={property.title}
                                             className="w-full h-full object-cover"
                                         />

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { propertyAPI } from '@/lib/api';
+import { getImageUrl } from '@/lib/urlUtils';
 
 function EditPropertyContent() {
     const router = useRouter();
@@ -269,7 +270,7 @@ function EditPropertyContent() {
                                     {existingImages.map((image, index) => (
                                         <div key={index} className="relative">
                                             <img
-                                                src={`${process.env.NEXT_PUBLIC_SOCKET_URL || 'https://house-rental-p61v.onrender.com'}${image}`}
+                                                src={getImageUrl(image)}
                                                 alt={`Property ${index + 1}`}
                                                 className="w-full h-32 object-cover rounded-lg"
                                             />

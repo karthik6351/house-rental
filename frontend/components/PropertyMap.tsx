@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
+import { getImageUrl } from '@/lib/urlUtils';
 
 interface Property {
     _id: string;
@@ -25,7 +26,6 @@ interface PropertyMapProps {
     center?: { lat: number; lng: number };
 }
 
-// Custom marker icon
 // Custom marker icon
 const customIcon = new L.Icon({
     iconUrl: '/images/leaflet/marker-icon.png',
@@ -97,8 +97,7 @@ export default function PropertyMap({ properties, onPropertyClick, center }: Pro
                                 <div className="p-2 max-w-xs">
                                     {property.images[0] && (
                                         <img
-                                            src={`${process.env.NEXT_PUBLIC_API_URL?.replace('/api', '')}${property.images[0]
-                                                }`}
+                                            src={getImageUrl(property.images[0])}
                                             alt={property.title}
                                             className="w-full h-32 object-cover rounded-lg mb-2"
                                         />
