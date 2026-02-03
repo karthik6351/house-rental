@@ -1,7 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     images: {
-        domains: ['localhost'],
         remotePatterns: [
             {
                 protocol: 'http',
@@ -9,23 +8,18 @@ const nextConfig = {
                 port: '5000',
                 pathname: '/uploads/**',
             },
-            // Allow images from the configured API URL (Render backend)
-            ...(process.env.NEXT_PUBLIC_API_URL ? [{
+            {
                 protocol: 'https',
-                hostname: new URL(process.env.NEXT_PUBLIC_API_URL).hostname,
-                port: '',
+                hostname: 'house-rental-p61v.onrender.com',
                 pathname: '/uploads/**',
-            }] : []),
+            },
             {
                 protocol: 'https',
                 hostname: '**',
             },
         ],
     },
-    env: {
-        NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api',
-        NEXT_PUBLIC_SOCKET_URL: process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:5000',
-    },
+    output: 'standalone',
 };
 
 module.exports = nextConfig;

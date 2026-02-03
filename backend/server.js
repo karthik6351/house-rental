@@ -51,12 +51,6 @@ app.use(express.urlencoded({ extended: true }));
 const mongoose = require('mongoose');
 
 // Create a separate connection for media
-// Create a separate connection for media
-const mediaParams = {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
-};
-
 const mediaUri = process.env.MONGODB_MEDIA_URI || process.env.MONGODB_URI;
 
 // Check if we have a valid URI before connecting
@@ -64,7 +58,7 @@ if (!mediaUri) {
     console.error('❌ Missing MongoDB URI for media storage');
 }
 
-const mediaConn = mongoose.createConnection(mediaUri, mediaParams);
+const mediaConn = mongoose.createConnection(mediaUri);
 let gfsBucket;
 
 mediaConn.on('connected', () => {
@@ -83,28 +77,49 @@ mediaConn.once('open', () => {
 
 app.get('/uploads/properties/:filename', async (req, res) => {
     try {
+        console.log('📸 Image Request:', req.params.filename);
+
         if (!gfsBucket) {
+            console.error('❌ GridFS bucket not initialized');
             return res.status(500).json({ message: 'Media database not connected' });
         }
 
-        const _id = req.params.id;
         const file = await gfsBucket.find({ filename: req.params.filename }).toArray();
 
         if (!file || file.length === 0) {
+            console.error('❌ File not found in GridFS:', req.params.filename);
             return res.status(404).json({ message: 'File not found' });
         }
 
-        // Check if content-type is available
+        console.log('✅ File found in GridFS:', req.params.filename, 'Type:', file[0].contentType);
+
+        // Set content-type
         if (file[0].contentType) {
             res.set('Content-Type', file[0].contentType);
+        } else {
+            // Default to image/jpeg if no content type
+            res.set('Content-Type', 'image/jpeg');
         }
 
+        // Set cache headers for better performance
+        res.set('Cache-Control', 'public, max-age=31536000');
+
         const readStream = gfsBucket.openDownloadStreamByName(req.params.filename);
+
+        readStream.on('error', (error) => {
+            console.error('❌ Stream error:', error);
+            if (!res.headersSent) {
+                res.status(404).json({ message: 'Error streaming image' });
+            }
+        });
+
         readStream.pipe(res);
 
     } catch (error) {
-        console.error('Image streaming error:', error);
-        res.status(404).json({ message: 'Image not found' });
+        console.error('❌ Image streaming error:', error);
+        if (!res.headersSent) {
+            res.status(404).json({ message: 'Image not found' });
+        }
     }
 });
 

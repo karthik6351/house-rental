@@ -143,6 +143,8 @@ const createProperty = async (req, res) => {
         // Get uploaded image paths
         const images = req.files ? req.files.map(file => `/uploads/properties/${file.filename}`) : [];
 
+        console.log(`📸 Uploaded ${images.length} images:`, images);
+
         // Create property
         const property = await Property.create({
             owner: req.user.userId,
