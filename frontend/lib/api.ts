@@ -5,9 +5,8 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://house-rental-p61v.on
 // Create axios instance
 const api = axios.create({
     baseURL: API_URL,
-    headers: {
-        'Content-Type': 'application/json',
-    },
+    // Do not set Content-Type globally to allow FormData (multipart/form-data) to work correctly
+    headers: {},
 });
 
 // Request interceptor to add token
