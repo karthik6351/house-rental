@@ -38,8 +38,8 @@ router.delete('/:id', authenticate, requireOwner, deleteProperty);
 
 router.patch('/:id/availability', authenticate, requireOwner, toggleAvailability);
 
-// Tenant routes
-router.get('/search', authenticate, requireTenant, searchProperties);
+// Tenant routes (now accessible to all authenticated users for better UX/Debugging)
+router.get('/search', authenticate, searchProperties);
 
 // Utility routes (both roles)
 router.get('/reverse-geocode', authenticate, getReverseGeocode);
