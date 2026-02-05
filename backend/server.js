@@ -32,13 +32,27 @@ const allowedOrigins = [
 
 app.use(cors({
     origin: function (origin, callback) {
+        const allowedOrigins = [
+            'http://localhost:3000',
+            'https://easyrent1.vercel.app',
+            'https://house-rental-p61v.onrender.com'
+        ];
+
+        // Add FRONTEND_URL from env if it exists
+        if (process.env.FRONTEND_URL) {
+            allowedOrigins.push(process.env.FRONTEND_URL);
+        }
+
         // Allow requests with no origin (like mobile apps or curl requests)
         if (!origin) return callback(null, true);
-        if (allowedOrigins.indexOf(origin) !== -1 || allowedOrigins.some(o => origin.startsWith(o))) {
+
+        if (allowedOrigins.includes(origin) || allowedOrigins.some(o => origin.startsWith(o))) {
             callback(null, true);
         } else {
-            console.log('Blocked by CORS:', origin);
-            callback(new Error('Not allowed by CORS'));
+            console.log('⚠️ CORS Blocked Origin:', origin);
+            // Don't throw error, just don't set access-control headers
+            // This is safer for debugging and cleaner for clients
+            callback(null, false);
         }
     },
     credentials: true
