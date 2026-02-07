@@ -8,33 +8,15 @@ if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
 }
 
-const { GridFsStorage } = require('multer-gridfs-storage');
-const crypto = require('crypto');
-
-// GridFS Storage Configuration
-const storage = new GridFsStorage({
-    url: process.env.MONGODB_MEDIA_URI || process.env.MONGODB_URI,
-    options: { useNewUrlParser: true, useUnifiedTopology: true },
-    file: (req, file) => {
-        return new Promise((resolve, reject) => {
-            crypto.randomBytes(16, (err, buf) => {
-                if (err) {
-                    return reject(err);
-                }
-                const filename = buf.toString('hex') + path.extname(file.originalname);
-                const fileInfo = {
-                    filename: filename,
-                    bucketName: 'properties', // Collection name: properties.files, properties.chunks
-                    metadata: {
-                        originalname: file.originalname,
-                        encoding: file.encoding,
-                        mimetype: file.mimetype,
-                        uploadDate: new Date()
-                    }
-                };
-                resolve(fileInfo);
-            });
-        });
+// Disk Storage Configuration (simple and reliable)
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, uploadDir);
+    },
+    filename: function (req, file, cb) {
+        // Generate unique filename
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
     }
 });
 
@@ -54,7 +36,7 @@ const upload = multer({
     storage: storage,
     fileFilter: fileFilter,
     limits: {
-        fileSize: parseInt(process.env.MAX_FILE_SIZE) || 5 * 1024 * 1024,
+        fileSize: parseInt(process.env.MAX_FILE_SIZE) || 5 * 1024 * 1024, // 5MB default
         files: 10
     }
 });
@@ -95,3 +77,4 @@ module.exports = {
     upload,
     handleUploadError
 };
+

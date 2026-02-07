@@ -98,79 +98,21 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(mongoSanitize());
 
 
-// Image serving route (GridFS)
-const mongoose = require('mongoose');
+// Image serving route (Disk Storage)
+const uploadPath = process.env.UPLOAD_PATH || './uploads/properties';
 
-// Create a separate connection for media
-const mediaUri = process.env.MONGODB_MEDIA_URI || process.env.MONGODB_URI;
+app.use('/uploads/properties', express.static(uploadPath));
 
-// Check if we have a valid URI before connecting
-if (!mediaUri) {
-    logger.error('❌ Missing MongoDB URI for media storage');
-}
+app.get('/uploads/properties/:filename', (req, res) => {
+    const filePath = path.join(__dirname, uploadPath, req.params.filename);
+    logger.debug('📸 Image Request:', req.params.filename);
 
-const mediaConn = mongoose.createConnection(mediaUri);
-let gfsBucket;
-
-mediaConn.on('connected', () => {
-    logger.info('✅ MongoDB Media Connected');
-});
-
-mediaConn.on('error', (err) => {
-    logger.error('❌ MongoDB Media Connection Error:', err);
-});
-
-mediaConn.once('open', () => {
-    gfsBucket = new mongoose.mongo.GridFSBucket(mediaConn.db, {
-        bucketName: 'properties'
-    });
-});
-
-app.get('/uploads/properties/:filename', async (req, res) => {
-    try {
-        logger.debug('📸 Image Request:', req.params.filename);
-
-        if (!gfsBucket) {
-            logger.error('❌ GridFS bucket not initialized');
-            return res.status(500).json({ message: 'Media database not connected' });
-        }
-
-        const file = await gfsBucket.find({ filename: req.params.filename }).toArray();
-
-        if (!file || file.length === 0) {
-            logger.error('❌ File not found in GridFS:', req.params.filename);
-            return res.status(404).json({ message: 'File not found' });
-        }
-
-        logger.debug('✅ File found in GridFS:', req.params.filename, 'Type:', file[0].contentType);
-
-        // Set content-type
-        if (file[0].contentType) {
-            res.set('Content-Type', file[0].contentType);
-        } else {
-            // Default to image/jpeg if no content type
-            res.set('Content-Type', 'image/jpeg');
-        }
-
-        // Set cache headers for better performance
-        res.set('Cache-Control', 'public, max-age=31536000');
-
-        const readStream = gfsBucket.openDownloadStreamByName(req.params.filename);
-
-        readStream.on('error', (error) => {
-            logger.error('❌ Stream error:', error);
-            if (!res.headersSent) {
-                res.status(404).json({ message: 'Error streaming image' });
-            }
-        });
-
-        readStream.pipe(res);
-
-    } catch (error) {
-        logger.error('❌ Image streaming error:', error);
-        if (!res.headersSent) {
-            res.status(404).json({ message: 'Image not found' });
-        }
+    if (fs.existsSync(filePath)) {
+        logger.debug('✅ File found:', req.params.filename);
+        res.sendFile(filePath);
+    } else {
+        logger.error('❌ File not found:', req.params.filename);
+        res.status(404).json({ message: 'File not found' });
     }
 });
 
