@@ -20,6 +20,9 @@ const { apiLimiter } = require('./config/rateLimiter');
 const app = express();
 const server = http.createServer(app);
 
+// Trust proxy for Render deployment (behind reverse proxy)
+app.set('trust proxy', 1);
+
 // Initialize Socket.IO
 const io = socketIO(server, {
     cors: {

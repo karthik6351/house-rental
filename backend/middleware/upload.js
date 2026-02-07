@@ -11,9 +11,10 @@ if (!fs.existsSync(uploadDir)) {
 const { GridFsStorage } = require('multer-gridfs-storage');
 const crypto = require('crypto');
 
-// Create storage engine
+// GridFS Storage Configuration
 const storage = new GridFsStorage({
     url: process.env.MONGODB_MEDIA_URI || process.env.MONGODB_URI,
+    options: { useNewUrlParser: true, useUnifiedTopology: true },
     file: (req, file) => {
         return new Promise((resolve, reject) => {
             crypto.randomBytes(16, (err, buf) => {
@@ -23,7 +24,13 @@ const storage = new GridFsStorage({
                 const filename = buf.toString('hex') + path.extname(file.originalname);
                 const fileInfo = {
                     filename: filename,
-                    bucketName: 'properties' // Collection name: properties.files, properties.chunks
+                    bucketName: 'properties', // Collection name: properties.files, properties.chunks
+                    metadata: {
+                        originalname: file.originalname,
+                        encoding: file.encoding,
+                        mimetype: file.mimetype,
+                        uploadDate: new Date()
+                    }
                 };
                 resolve(fileInfo);
             });
