@@ -70,13 +70,26 @@ const propertySchema = new mongoose.Schema({
         type: Boolean,
         default: true
     },
+    // Soft Delete fields
+    deleted: {
+        type: Boolean,
+        default: false,
+        index: true
+    },
+    deletedAt: {
+        type: Date
+    },
+    deletedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    },
     images: {
         type: [String],
         validate: {
             validator: function (v) {
                 return v.length <= 10;
             },
-            message: 'Maximum 10 images allowed'
+            message: 'Cannot upload more than 10 images per property'
         }
     },
     createdAt: {
@@ -91,14 +104,22 @@ const propertySchema = new mongoose.Schema({
     timestamps: true
 });
 
-// GeoJSON index for location-based queries
+// Geospatial Index for location-based queries
 propertySchema.index({ location: '2dsphere' });
 
-// Index for owner lookup
+// Index for filtering
+propertySchema.index({ price: 1, bedrooms: 1, bathrooms: 1 });
 propertySchema.index({ owner: 1 });
+propertySchema.index({ createdAt: -1 });
 
-// Index for availability and price (common filters)
-propertySchema.index({ available: 1, price: 1 });
+// Query middleware to exclude soft-deleted properties by default
+propertySchema.pre(/^find/, function (next) {
+    // Check if includeDeleted option is set
+    if (!this.getOptions().includeDeleted) {
+        this.where({ deleted: false });
+    }
+    next();
+});
 
 // Virtual for property URL (can be used later)
 propertySchema.virtual('url').get(function () {

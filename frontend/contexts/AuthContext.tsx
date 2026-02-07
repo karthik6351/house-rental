@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { authAPI } from '@/lib/api';
 
 interface User {
+    _id: string;  // MongoDB _id
     id: string;
     name: string;
     email: string;

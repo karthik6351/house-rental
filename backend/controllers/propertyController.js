@@ -298,7 +298,7 @@ const updateProperty = async (req, res) => {
     }
 };
 
-// @desc    Delete property
+// @desc    Soft delete property
 // @route   DELETE /api/properties/:id
 // @access  Private (Owner only)
 const deleteProperty = async (req, res) => {
@@ -323,7 +323,12 @@ const deleteProperty = async (req, res) => {
             });
         }
 
-        await property.deleteOne();
+        // Soft delete by setting flags
+        property.deleted = true;
+        property.deletedAt = new Date();
+        property.deletedBy = req.user.userId;
+        property.available = false; // Mark as unavailable too
+        await property.save();
 
         res.status(200).json({
             success: true,
@@ -534,11 +539,99 @@ const getReverseGeocode = async (req, res) => {
     }
 };
 
+// @desc    Restore deleted property
+// @route   PATCH /api/properties/:id/restore
+// @access  Private (Owner only)
+const restoreProperty = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        // Find property with includeDeleted option
+        const property = await Property.findById(id).setOptions({ includeDeleted: true });
+
+        if (!property) {
+            return res.status(404).json({
+                success: false,
+                message: 'Property not found'
+            });
+        }
+
+        // Verify ownership
+        if (property.owner.toString() !== req.user.userId) {
+            return res.status(403).json({
+                success: false,
+                message: 'You are not authorized to restore this property'
+            });
+        }
+
+        // Check if actually deleted
+        if (!property.deleted) {
+            return res.status(400).json({
+                success: false,
+                message: 'Property is not deleted'
+            });
+        }
+
+        // Restore property
+        property.deleted = false;
+        property.deletedAt = null;
+        property.deletedBy = null;
+        await property.save();
+
+        res.status(200).json({
+            success: true,
+            message: 'Property restored successfully',
+            property
+        });
+
+    } catch (error) {
+        console.error('Restore property error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to restore property',
+            error: error.message
+        });
+    }
+};
+
+// @desc    Get deleted properties for owner
+// @route   GET /api/properties/deleted
+// @access  Private (Owner only)
+const getDeletedProperties = async (req, res) => {
+    try {
+        const userId = req.user.userId;
+
+        // Find deleted properties owned by user
+        const properties = await Property.find({
+            owner: userId,
+            deleted: true
+        })
+            .setOptions({ includeDeleted: true })
+            .sort({ deletedAt: -1 });
+
+        res.status(200).json({
+            success: true,
+            count: properties.length,
+            properties
+        });
+
+    } catch (error) {
+        console.error('Get deleted properties error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to fetch deleted properties',
+            error: error.message
+        });
+    }
+};
+
 module.exports = {
     createProperty,
     getMyProperties,
     updateProperty,
     deleteProperty,
+    restoreProperty,
+    getDeletedProperties,
     toggleAvailability,
     searchProperties,
     getProperty,

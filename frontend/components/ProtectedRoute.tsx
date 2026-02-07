@@ -7,9 +7,10 @@ import { useAuth } from '@/contexts/AuthContext';
 interface ProtectedRouteProps {
     children: React.ReactNode;
     requiredRole?: 'owner' | 'tenant';
+    allowedRoles?: ('owner' | 'tenant')[];
 }
 
-export default function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) {
+export default function ProtectedRoute({ children, requiredRole, allowedRoles }: ProtectedRouteProps) {
     const router = useRouter();
     const { user, isLoading } = useAuth();
 
@@ -17,16 +18,24 @@ export default function ProtectedRoute({ children, requiredRole }: ProtectedRout
         if (!isLoading) {
             if (!user) {
                 router.push('/login');
-            } else if (requiredRole && user.role !== requiredRole) {
-                // Redirect to appropriate dashboard based on role
-                if (user.role === 'owner') {
-                    router.push('/owner/dashboard');
-                } else {
-                    router.push('/tenant/search');
+            } else {
+                // Check requiredRole OR allowedRoles
+                const hasAccess =
+                    (!requiredRole && !allowedRoles) ||
+                    (requiredRole && user.role === requiredRole) ||
+                    (allowedRoles && allowedRoles.includes(user.role));
+
+                if (!hasAccess) {
+                    // Redirect to appropriate dashboard based on role
+                    if (user.role === 'owner') {
+                        router.push('/owner/dashboard');
+                    } else {
+                        router.push('/tenant/search');
+                    }
                 }
             }
         }
-    }, [user, isLoading, requiredRole, router]);
+    }, [user, isLoading, requiredRole, allowedRoles, router]);
 
     // Show loading state
     if (isLoading) {
@@ -41,7 +50,12 @@ export default function ProtectedRoute({ children, requiredRole }: ProtectedRout
     }
 
     // Show nothing while redirecting
-    if (!user || (requiredRole && user.role !== requiredRole)) {
+    const hasAccess =
+        (!requiredRole && !allowedRoles) ||
+        (requiredRole && user?.role === requiredRole) ||
+        (allowedRoles && user && allowedRoles.includes(user.role));
+
+    if (!user || !hasAccess) {
         return null;
     }
 
