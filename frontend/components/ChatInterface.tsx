@@ -77,7 +77,7 @@ export default function ChatInterface({ propertyId, otherUserId, otherUserName, 
 
         socket.on('connect', () => {
             console.log('Socket connected');
-            socket.emit('join-property', propertyId);
+            socket.emit('join-conversation', { propertyId, userId: user._id });
         });
 
         socket.on('new-message', (message: Message) => {
@@ -93,7 +93,6 @@ export default function ChatInterface({ propertyId, otherUserId, otherUserName, 
         });
 
         return () => {
-            socket.emit('leave-property', propertyId);
             socket.disconnect();
         };
     }, [propertyId, otherUserId, user]);
