@@ -50,17 +50,7 @@ if (process.env.NODE_ENV === 'development') {
     }));
 }
 
-// Rate limiting - Apply to all requests
-app.use('/api/', apiLimiter);
-
-// Body parser middleware with size limits
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-
-// Sanitize data to prevent NoSQL injection
-app.use(mongoSanitize());
-
-// CORS Configuration
+// CORS Configuration - MUST come before rate limiting
 const allowedOrigins = [
     'http://localhost:3000',
     'https://easyrent1.vercel.app'
@@ -89,8 +79,24 @@ app.use(cors({
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization']
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    preflightContinue: false,
+    optionsSuccessStatus: 204
 }));
+
+// Handle preflight requests explicitly
+app.options('*', cors());
+
+// Rate limiting - Apply AFTER CORS
+app.use('/api/', apiLimiter);
+
+// Body parser middleware with size limits
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Sanitize data to prevent NoSQL injection
+app.use(mongoSanitize());
+
 
 // Image serving route (GridFS)
 const mongoose = require('mongoose');
