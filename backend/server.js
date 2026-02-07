@@ -101,7 +101,13 @@ app.use(mongoSanitize());
 // Image serving route (Disk Storage)
 const uploadPath = process.env.UPLOAD_PATH || './uploads/properties';
 
-app.use('/uploads/properties', express.static(uploadPath));
+// Serve static files with CORS headers
+app.use('/uploads/properties', (req, res, next) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+    res.setHeader('Cache-Control', 'public, max-age=31536000');
+    next();
+}, express.static(uploadPath));
 
 app.get('/uploads/properties/:filename', (req, res) => {
     const filePath = path.join(__dirname, uploadPath, req.params.filename);
@@ -109,12 +115,15 @@ app.get('/uploads/properties/:filename', (req, res) => {
 
     if (fs.existsSync(filePath)) {
         logger.debug('✅ File found:', req.params.filename);
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
         res.sendFile(filePath);
     } else {
         logger.error('❌ File not found:', req.params.filename);
         res.status(404).json({ message: 'File not found' });
     }
 });
+
 
 // Routes
 app.use('/api/auth', require('./routes/auth'));
