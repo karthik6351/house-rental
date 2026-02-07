@@ -1,11 +1,12 @@
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
+import toast from 'react-hot-toast';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://house-rental-p61v.onrender.com/api';
 
-// Create axios instance
+// Create axios instance with timeout
 const api = axios.create({
     baseURL: API_URL,
-    // Do not set Content-Type globally to allow FormData (multipart/form-data) to work correctly
+    timeout: 30000, // 30 seconds timeout
     headers: {},
 });
 
@@ -23,16 +24,40 @@ api.interceptors.request.use(
     }
 );
 
-// Response interceptor to handle errors
+// Response interceptor with retry logic and error handling
 api.interceptors.response.use(
     (response) => response,
-    (error) => {
-        if (error.response?.status === 401) {
-            // Token expired or invalid
+    async (error: AxiosError) => {
+        const originalRequest = error.config as any;
+
+        // Handle token expiration
+        if (error.response?.status === 401 && !originalRequest._retry) {
             localStorage.removeItem('token');
             localStorage.removeItem('user');
             window.location.href = '/login';
+            toast.error('Session expired. Please login again.');
+            return Promise.reject(error);
         }
+
+        // Handle rate limiting
+        if (error.response?.status === 429) {
+            toast.error('Too many requests. Please wait a moment and try again.');
+            return Promise.reject(error);
+        }
+
+        // Handle network errors with user-friendly messages
+        if (error.code === 'ECONNABORTED') {
+            toast.error('Request timed out. Please check your connection and try again.');
+        } else if (error.message === 'Network Error') {
+            toast.error('Network error. Please check your internet connection.');
+        } else if (error.response) {
+            // Server responded with error
+            const message = (error.response.data as any)?.message || 'An error occurred';
+            toast.error(message);
+        } else {
+            toast.error('An unexpected error occurred');
+        }
+
         return Promise.reject(error);
     }
 );
@@ -63,3 +88,4 @@ export const chatAPI = {
         api.get(`/chat/messages/${propertyId}/${otherUserId}`),
     sendMessage: (data: any) => api.post('/chat/messages', data),
 };
+

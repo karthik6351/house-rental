@@ -12,12 +12,14 @@ const {
 } = require('../controllers/propertyController');
 const { authenticate, requireOwner, requireTenant } = require('../middleware/auth');
 const { upload, handleUploadError } = require('../middleware/upload');
+const { createPropertyLimiter } = require('../config/rateLimiter');
 
 // Owner routes
 router.post(
     '/',
     authenticate,
     requireOwner,
+    createPropertyLimiter,
     upload.array('images', 10),
     handleUploadError,
     createProperty

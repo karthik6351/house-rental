@@ -1,10 +1,20 @@
 require('dotenv').config();
+
+// Validate environment variables before starting
+const { validateEnv } = require('./config/validateEnv');
+validateEnv();
+
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const http = require('http');
 const socketIO = require('socket.io');
+const helmet = require('helmet');
+const mongoSanitize = require('express-mongo-sanitize');
+const morgan = require('morgan');
 const connectDB = require('./config/database');
+const logger = require('./config/logger');
+const { apiLimiter } = require('./config/rateLimiter');
 
 // Initialize express app
 const app = express();
@@ -22,7 +32,32 @@ const io = socketIO(server, {
 // Connect to database
 connectDB();
 
-// Middleware - CORS Configuration
+// Security Middleware - Helmet for security headers
+app.use(helmet({
+    contentSecurityPolicy: false, // Disable CSP for now (can configure later)
+    crossOriginEmbedderPolicy: false,
+}));
+
+// HTTP request logging
+if (process.env.NODE_ENV === 'development') {
+    app.use(morgan('dev'));
+} else {
+    app.use(morgan('combined', {
+        stream: { write: message => logger.http(message.trim()) }
+    }));
+}
+
+// Rate limiting - Apply to all requests
+app.use('/api/', apiLimiter);
+
+// Body parser middleware with size limits
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Sanitize data to prevent NoSQL injection
+app.use(mongoSanitize());
+
+// CORS Configuration
 const allowedOrigins = [
     'http://localhost:3000',
     'https://easyrent1.vercel.app'
@@ -33,22 +68,19 @@ if (process.env.FRONTEND_URL) {
     allowedOrigins.push(process.env.FRONTEND_URL);
 }
 
-console.log('🔒 CORS Allowed Origins:', allowedOrigins);
+logger.info('🔒 CORS Allowed Origins: ' + allowedOrigins.join(', '));
 
 app.use(cors({
     origin: function (origin, callback) {
         // Allow requests with no origin (like mobile apps, Postman, or curl requests)
         if (!origin) {
-            console.log('✅ CORS: Allowing request with no origin');
             return callback(null, true);
         }
 
         if (allowedOrigins.includes(origin)) {
-            console.log('✅ CORS: Allowing origin:', origin);
             callback(null, true);
         } else {
-            console.log('⚠️ CORS: Blocked origin:', origin);
-            console.log('   Allowed origins:', allowedOrigins);
+            logger.warn(`⚠️ CORS: Blocked origin: ${origin}`);
             callback(new Error('Not allowed by CORS'));
         }
     },
@@ -56,9 +88,6 @@ app.use(cors({
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
-
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 
 // Image serving route (GridFS)
 const mongoose = require('mongoose');
@@ -68,18 +97,18 @@ const mediaUri = process.env.MONGODB_MEDIA_URI || process.env.MONGODB_URI;
 
 // Check if we have a valid URI before connecting
 if (!mediaUri) {
-    console.error('❌ Missing MongoDB URI for media storage');
+    logger.error('❌ Missing MongoDB URI for media storage');
 }
 
 const mediaConn = mongoose.createConnection(mediaUri);
 let gfsBucket;
 
 mediaConn.on('connected', () => {
-    console.log('✅ MongoDB Media Connected');
+    logger.info('✅ MongoDB Media Connected');
 });
 
 mediaConn.on('error', (err) => {
-    console.error('❌ MongoDB Media Connection Error:', err);
+    logger.error('❌ MongoDB Media Connection Error:', err);
 });
 
 mediaConn.once('open', () => {
@@ -90,21 +119,21 @@ mediaConn.once('open', () => {
 
 app.get('/uploads/properties/:filename', async (req, res) => {
     try {
-        console.log('📸 Image Request:', req.params.filename);
+        logger.debug('📸 Image Request:', req.params.filename);
 
         if (!gfsBucket) {
-            console.error('❌ GridFS bucket not initialized');
+            logger.error('❌ GridFS bucket not initialized');
             return res.status(500).json({ message: 'Media database not connected' });
         }
 
         const file = await gfsBucket.find({ filename: req.params.filename }).toArray();
 
         if (!file || file.length === 0) {
-            console.error('❌ File not found in GridFS:', req.params.filename);
+            logger.error('❌ File not found in GridFS:', req.params.filename);
             return res.status(404).json({ message: 'File not found' });
         }
 
-        console.log('✅ File found in GridFS:', req.params.filename, 'Type:', file[0].contentType);
+        logger.debug('✅ File found in GridFS:', req.params.filename, 'Type:', file[0].contentType);
 
         // Set content-type
         if (file[0].contentType) {
@@ -120,7 +149,7 @@ app.get('/uploads/properties/:filename', async (req, res) => {
         const readStream = gfsBucket.openDownloadStreamByName(req.params.filename);
 
         readStream.on('error', (error) => {
-            console.error('❌ Stream error:', error);
+            logger.error('❌ Stream error:', error);
             if (!res.headersSent) {
                 res.status(404).json({ message: 'Error streaming image' });
             }
@@ -129,7 +158,7 @@ app.get('/uploads/properties/:filename', async (req, res) => {
         readStream.pipe(res);
 
     } catch (error) {
-        console.error('❌ Image streaming error:', error);
+        logger.error('❌ Image streaming error:', error);
         if (!res.headersSent) {
             res.status(404).json({ message: 'Image not found' });
         }
@@ -154,19 +183,19 @@ app.get('/api/health', (req, res) => {
 const Message = require('./models/Message');
 
 io.on('connection', (socket) => {
-    console.log('✅ User connected:', socket.id);
+    logger.info('✅ User connected:', socket.id);
 
     // Join user to their personal room
     socket.on('join', (userId) => {
         socket.join(userId);
-        console.log(`User ${userId} joined their room`);
+        logger.debug(`User ${userId} joined their room`);
     });
 
     // Join specific conversation room
     socket.on('join-conversation', ({ propertyId, userId }) => {
         const room = `property-${propertyId}`;
         socket.join(room);
-        console.log(`User ${userId} joined conversation room: ${room}`);
+        logger.debug(`User ${userId} joined conversation room: ${room}`);
     });
 
     // Handle sending message
@@ -196,7 +225,7 @@ io.on('connection', (socket) => {
             });
 
         } catch (error) {
-            console.error('Socket send message error:', error);
+            logger.error('Socket send message error:', error);
             socket.emit('error', { message: 'Failed to send message' });
         }
     });
@@ -209,13 +238,13 @@ io.on('connection', (socket) => {
 
     // Handle disconnect
     socket.on('disconnect', () => {
-        console.log('❌ User disconnected:', socket.id);
+        logger.info('❌ User disconnected:', socket.id);
     });
 });
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-    console.error('Error:', err);
+    logger.error('Error:', err);
     res.status(err.status || 500).json({
         success: false,
         message: err.message || 'Internal server error',
@@ -236,20 +265,28 @@ const PORT = process.env.PORT || 5000;
 
 if (require.main === module) {
     server.listen(PORT, () => {
-        console.log(`🚀 Server running on port ${PORT}`);
-        console.log(`📝 Environment: ${process.env.NODE_ENV}`);
-        console.log(`🌐 Frontend URL: ${process.env.FRONTEND_URL}`);
+        logger.info(`🚀 Server running on port ${PORT}`);
+        logger.info(`📝 Environment: ${process.env.NODE_ENV || 'development'}`);
+        logger.info(`🌐 Frontend URL: ${process.env.FRONTEND_URL || 'Not set'}`);
     });
 }
 
 // Handle unhandled promise rejections
 process.on('unhandledRejection', (err) => {
-    console.error('❌ Unhandled Rejection:', err);
+    logger.error('❌ Unhandled Rejection:', err);
     if (server.listening) {
         server.close(() => process.exit(1));
     } else {
         process.exit(1);
     }
+});
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+    logger.info('SIGTERM signal received: closing HTTP server');
+    server.close(() => {
+        logger.info('HTTP server closed');
+    });
 });
 
 module.exports = app;
