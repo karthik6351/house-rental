@@ -22,40 +22,39 @@ const io = socketIO(server, {
 // Connect to database
 connectDB();
 
-// Middleware
-// Middleware
+// Middleware - CORS Configuration
 const allowedOrigins = [
     'http://localhost:3000',
-    'https://easyrent1.vercel.app',
-    process.env.FRONTEND_URL
-].filter(Boolean);
+    'https://easyrent1.vercel.app'
+];
+
+// Add FRONTEND_URL from env if it exists
+if (process.env.FRONTEND_URL) {
+    allowedOrigins.push(process.env.FRONTEND_URL);
+}
+
+console.log('🔒 CORS Allowed Origins:', allowedOrigins);
 
 app.use(cors({
     origin: function (origin, callback) {
-        const allowedOrigins = [
-            'http://localhost:3000',
-            'https://easyrent1.vercel.app',
-            'https://house-rental-p61v.onrender.com'
-        ];
-
-        // Add FRONTEND_URL from env if it exists
-        if (process.env.FRONTEND_URL) {
-            allowedOrigins.push(process.env.FRONTEND_URL);
+        // Allow requests with no origin (like mobile apps, Postman, or curl requests)
+        if (!origin) {
+            console.log('✅ CORS: Allowing request with no origin');
+            return callback(null, true);
         }
 
-        // Allow requests with no origin (like mobile apps or curl requests)
-        if (!origin) return callback(null, true);
-
-        if (allowedOrigins.includes(origin) || allowedOrigins.some(o => origin.startsWith(o))) {
+        if (allowedOrigins.includes(origin)) {
+            console.log('✅ CORS: Allowing origin:', origin);
             callback(null, true);
         } else {
-            console.log('⚠️ CORS Blocked Origin:', origin);
-            // Don't throw error, just don't set access-control headers
-            // This is safer for debugging and cleaner for clients
-            callback(null, false);
+            console.log('⚠️ CORS: Blocked origin:', origin);
+            console.log('   Allowed origins:', allowedOrigins);
+            callback(new Error('Not allowed by CORS'));
         }
     },
-    credentials: true
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 app.use(express.json());
