@@ -1,14 +1,14 @@
 /**
- * Utility to generate fully qualified image URLs
- * Handles local vs production environments and relative paths
+ * Utility to generate fully qualified image URLs from GridFS file IDs
+ * Handles local vs production environments and constructs API endpoint URLs
  */
 
-export const getImageUrl = (path: string | undefined | null): string => {
-    if (!path) return '';
+export const getImageUrl = (fileId: string | undefined | null): string => {
+    if (!fileId) return '';
 
     // If it's already a full URL, return it
-    if (path.startsWith('http://') || path.startsWith('https://')) {
-        return path;
+    if (fileId.startsWith('http://') || fileId.startsWith('https://')) {
+        return fileId;
     }
 
     // Get the base backend URL
@@ -24,9 +24,7 @@ export const getImageUrl = (path: string | undefined | null): string => {
         baseUrl = 'https://house-rental-p61v.onrender.com';
     }
 
-    // Ensure path starts with /
-    const cleanPath = path.startsWith('/') ? path : `/${path}`;
-
-    // Remove trailing slash from base and combine
-    return `${baseUrl.replace(/\/$/, '')}${cleanPath}`;
+    // Construct GridFS image endpoint URL
+    // fileId is a MongoDB ObjectId string stored in Property.images array
+    return `${baseUrl.replace(/\/$/, '')}/api/images/${fileId}`;
 };

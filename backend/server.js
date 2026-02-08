@@ -13,6 +13,7 @@ const helmet = require('helmet');
 const mongoSanitize = require('express-mongo-sanitize');
 const morgan = require('morgan');
 const connectDB = require('./config/database');
+const { initGridFS } = require('./middleware/uploadGridFS');
 const logger = require('./config/logger');
 const { apiLimiter } = require('./config/rateLimiter');
 
@@ -33,7 +34,9 @@ const io = socketIO(server, {
 });
 
 // Connect to database
-connectDB();
+connectDB().then(() => {
+    initGridFS();
+});
 
 // Security Middleware - Helmet for security headers
 app.use(helmet({
@@ -129,6 +132,7 @@ app.get('/uploads/properties/:filename', (req, res) => {
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/properties', require('./routes/properties'));
 app.use('/api/chat', require('./routes/chat'));
+app.use('/api/images', require('./routes/images')); // GridFS image serving
 
 // Health check
 app.get('/api/health', (req, res) => {

@@ -140,10 +140,10 @@ const createProperty = async (req, res) => {
         }
 
 
-        // Get uploaded image paths
-        const images = req.files ? req.files.map(file => `/uploads/properties/${file.filename}`) : [];
+        // Get GridFS file IDs from optimizeImages middleware
+        const images = req.optimizedFileIds || [];
 
-        console.log(`📸 Uploaded ${images.length} images:`, images);
+        console.log(`📸 Uploaded ${images.length} images to GridFS:`, images);
 
         // Create property
         const property = await Property.create({
@@ -274,9 +274,8 @@ const updateProperty = async (req, res) => {
         }
 
         // Update images if new ones uploaded
-        if (req.files && req.files.length > 0) {
-            const newImages = req.files.map(file => `/uploads/properties/${file.filename}`);
-            property.images = [...property.images, ...newImages].slice(0, 10); // Max 10 images
+        if (req.optimizedFileIds && req.optimizedFileIds.length > 0) {
+            property.images = [...property.images, ...req.optimizedFileIds].slice(0, 10); // Max 10 images
         }
 
         await property.save();
