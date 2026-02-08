@@ -1,7 +1,7 @@
 const rateLimit = require('express-rate-limit');
 const express = require('express');
 const router = express.Router();
-const { protect, requireOwner } = require('../middleware/auth');
+const { authenticate, requireOwner } = require('../middleware/auth');
 const { upload } = require('../middleware/upload');
 const {
     createProperty,
@@ -28,7 +28,7 @@ const createPropertyLimiter = rateLimit({
 // @access  Private (Owner only)
 router.post(
     '/',
-    protect,
+    authenticate,
     requireOwner,
     createPropertyLimiter,
     upload.array('images', 10),
@@ -38,34 +38,34 @@ router.post(
 // @route   GET /api/properties/my-properties
 // @desc    Get all properties for logged-in owner
 // @access  Private (Owner only)
-router.get('/my-properties', protect, requireOwner, getMyProperties);
+router.get('/my-properties', authenticate, requireOwner, getMyProperties);
 
 // @route   GET /api/properties/deleted
 // @desc    Get deleted properties for owner
 // @access  Private (Owner only)
-router.get('/deleted', protect, requireOwner, getDeletedProperties);
+router.get('/deleted', authenticate, requireOwner, getDeletedProperties);
 
 // @route   GET /api/properties/search
 // @desc    Search properties (Tenant)
 // @access  Private
-router.get('/search', protect, searchProperties);
+router.get('/search', authenticate, searchProperties);
 
 // @route   GET /api/properties/reverse-geocode
 // @desc    Get address from coordinates
 // @access  Private
-router.get('/reverse-geocode', protect, getReverseGeocode);
+router.get('/reverse-geocode', authenticate, getReverseGeocode);
 
 // @route   GET /api/properties/:id
 // @desc    Get single property
 // @access  Private
-router.get('/:id', protect, getProperty);
+router.get('/:id', authenticate, getProperty);
 
 // @route   PUT /api/properties/:id
 // @desc    Update property
 // @access  Private (Owner only)
 router.put(
     '/:id',
-    protect,
+    authenticate,
     requireOwner,
     upload.array('images', 10),
     updateProperty
@@ -74,16 +74,16 @@ router.put(
 // @route   DELETE /api/properties/:id
 // @desc    Soft delete property
 // @access  Private (Owner only)
-router.delete('/:id', protect, requireOwner, deleteProperty);
+router.delete('/:id', authenticate, requireOwner, deleteProperty);
 
 // @route   PATCH /api/properties/:id/availability
 // @desc    Toggle property availability
 // @access  Private (Owner only)
-router.patch('/:id/availability', protect, requireOwner, toggleAvailability);
+router.patch('/:id/availability', authenticate, requireOwner, toggleAvailability);
 
 // @route   PATCH /api/properties/:id/restore
 // @desc    Restore deleted property
 // @access  Private (Owner only)
-router.patch('/:id/restore', protect, requireOwner, restoreProperty);
+router.patch('/:id/restore', authenticate, requireOwner, restoreProperty);
 
 module.exports = router;
