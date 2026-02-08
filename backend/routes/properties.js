@@ -2,7 +2,7 @@ const rateLimit = require('express-rate-limit');
 const express = require('express');
 const router = express.Router();
 const { protect, requireOwner } = require('../middleware/auth');
-const { upload, processImages, handleUploadError } = require('../middleware/upload');
+const { upload, processImages } = require('../middleware/upload');
 const {
     createProperty,
     getMyProperties,
@@ -33,7 +33,6 @@ router.post(
     createPropertyLimiter,
     upload.array('images', 10),
     processImages,
-    handleUploadError,
     createProperty
 );
 
@@ -71,7 +70,6 @@ router.put(
     requireOwner,
     upload.array('images', 10),
     processImages,
-    handleUploadError,
     updateProperty
 );
 
