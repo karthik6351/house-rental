@@ -74,12 +74,14 @@ export const authAPI = {
 export const propertyAPI = {
     create: (formData: FormData) => api.post('/properties', formData),
     getMyProperties: () => api.get('/properties/my-properties'),
-    getProperty: (id: string) => api.get(`/properties/${id}`),
     update: (id: string, formData: FormData) => api.put(`/properties/${id}`, formData),
     delete: (id: string) => api.delete(`/properties/${id}`),
-    toggleAvailability: (id: string) => api.patch(`/properties/${id}/availability`),
+    restore: (id: string) => api.patch(`/properties/${id}/restore`),
+    getDeletedProperties: () => api.get('/properties/deleted'),
+    toggleAvailability: (id: string, available: boolean) => api.patch(`/properties/${id}/availability`, { available }),
     search: (params: any) => api.get('/properties/search', { params }),
-    getById: (id: string) => api.get(`/properties/${id}`),
+    searchProperties: (params: any) => api.get('/properties/search', { params }),
+    getProperty: (id: string) => api.get(`/properties/${id}`),
     getReverseGeocode: (lat: number, lng: number) => api.get('/properties/reverse-geocode', { params: { lat, lng } }),
 };
 

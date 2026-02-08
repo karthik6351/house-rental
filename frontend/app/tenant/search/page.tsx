@@ -7,6 +7,8 @@ import { propertyAPI } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import dynamic from 'next/dynamic';
 import { getImageUrl } from '@/lib/urlUtils';
+import { Search, MapPin, Home, DollarSign, Bed, Bath, Maximize2, Map } from 'lucide-react';
+import MapModal from '@/components/MapModal';
 const PropertyMap = dynamic(() => import('@/components/PropertyMap'), { ssr: false });
 
 interface Property {
@@ -37,39 +39,47 @@ function TenantSearchContent() {
     const router = useRouter();
     const { user, logout } = useAuth();
     const [properties, setProperties] = useState<Property[]>([]);
-    const [isLoading, setIsLoading] = useState(false);
+    const [filteredProperties, setFilteredProperties] = useState<Property[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
     const [showMap, setShowMap] = useState(true);
     const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
+    const [isMapModalOpen, setIsMapModalOpen] = useState(false);
     const [filters, setFilters] = useState({
         minPrice: '',
         maxPrice: '',
         bedrooms: '',
         bathrooms: '',
+        minArea: '',
+        maxArea: '',
         furnishing: '',
-        radius: '10',
     });
 
     const fetchProperties = async (useLocation = false) => {
         setIsLoading(true);
         try {
-            const params: any = {};
+            setIsLoading(true);
+            let params: any = {};
+
             if (filters.minPrice) params.minPrice = filters.minPrice;
             if (filters.maxPrice) params.maxPrice = filters.maxPrice;
             if (filters.bedrooms) params.bedrooms = filters.bedrooms;
             if (filters.bathrooms) params.bathrooms = filters.bathrooms;
             if (filters.furnishing) params.furnishing = filters.furnishing;
+            if (filters.minArea) params.minArea = filters.minArea;
+            if (filters.maxArea) params.maxArea = filters.maxArea;
 
-            // Add location-based search
             if (useLocation && userLocation) {
                 params.lat = userLocation.lat;
                 params.lng = userLocation.lng;
-                params.radius = filters.radius;
             }
 
-            const response = await propertyAPI.search(params);
+            const response = await propertyAPI.searchProperties(params);
             setProperties(response.data.properties);
         } catch (error) {
             console.error('Failed to fetch properties:', error);
+            alert('Failed to load properties');
         } finally {
             setIsLoading(false);
         }
@@ -93,11 +103,12 @@ function TenantSearchContent() {
             maxPrice: '',
             bedrooms: '',
             bathrooms: '',
-            furnishing: '',
-            radius: '10',
+            minArea: '',
+            maxArea: '',
+            furnishing: ''
         });
         setUserLocation(null);
-        setTimeout(fetchProperties, 100);
+        fetchProperties();
     };
 
     const handleUseMyLocation = () => {
@@ -220,25 +231,6 @@ function TenantSearchContent() {
                                 <option value="unfurnished">Unfurnished</option>
                             </select>
                         </div>
-
-                        {userLocation && (
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                    Search Radius (km)
-                                </label>
-                                <select
-                                    name="radius"
-                                    value={filters.radius}
-                                    onChange={handleFilterChange}
-                                    className="input-field text-sm"
-                                >
-                                    <option value="5">5 km</option>
-                                    <option value="10">10 km</option>
-                                    <option value="20">20 km</option>
-                                    <option value="50">50 km</option>
-                                </select>
-                            </div>
-                        )}
                     </div>
 
                     <div className="flex gap-3 mt-6 flex-wrap">
@@ -375,19 +367,44 @@ function TenantSearchContent() {
                                         <p className="text-gray-500 dark:text-gray-400">Owner</p>
                                         <p className="font-semibold text-gray-900 dark:text-white">{property.owner.name}</p>
                                     </div>
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            window.location.href = `/tenant/messages?propertyId=${property._id}&ownerId=${property.owner._id}`;
-                                        }}
-                                        className="btn-primary text-sm py-2 hover:shadow-lg transition-shadow"
-                                    >
-                                        Contact Owner
-                                    </button>
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setSelectedProperty(property);
+                                                setIsMapModalOpen(true);
+                                            }}
+                                            className="p-2 rounded-lg bg-primary-100 text-primary-700 hover:bg-primary-200 dark:bg-primary-900 dark:text-primary-300 transition-colors"
+                                            title="View on Map"
+                                        >
+                                            <Map className="w-5 h-5" />
+                                        </button>
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                window.location.href = `/tenant/messages?propertyId=${property._id}&ownerId=${property.owner._id}`;
+                                            }}
+                                            className="btn-primary text-sm py-2 hover:shadow-lg transition-shadow"
+                                        >
+                                            Contact Owner
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         ))}
                     </div>
+                )}
+
+                {/* Map Modal */}
+                {selectedProperty && (
+                    <MapModal
+                        isOpen={isMapModalOpen}
+                        onClose={() => {
+                            setIsMapModalOpen(false);
+                            setSelectedProperty(null);
+                        }}
+                        property={selectedProperty}
+                    />
                 )}
             </main>
         </div >
