@@ -37,6 +37,17 @@ export default function TenantMessagesPage() {
 
     useEffect(() => {
         fetchConversations();
+
+        // Check for URL parameters (from Contact Owner button)
+        const params = new URLSearchParams(window.location.search);
+        const propertyId = params.get('propertyId');
+        const ownerId = params.get('ownerId');
+
+        if (propertyId && ownerId) {
+            // Auto-select this conversation once conversations are loaded
+            // We'll handle this in a separate useEffect after conversations load
+            sessionStorage.setItem('pendingChat', JSON.stringify({ propertyId, ownerId }));
+        }
     }, []);
 
     const fetchConversations = async () => {
@@ -63,6 +74,25 @@ export default function TenantMessagesPage() {
             });
         }
     };
+
+    // Auto-select conversation from URL parameters after conversations load
+    useEffect(() => {
+        if (conversations.length > 0) {
+            const pendingChat = sessionStorage.getItem('pendingChat');
+            if (pendingChat) {
+                try {
+                    const { propertyId, ownerId } = JSON.parse(pendingChat);
+                    handleSelectConversation(propertyId, ownerId);
+                    sessionStorage.removeItem('pendingChat');
+
+                    // Clear URL parameters
+                    window.history.replaceState({}, '', '/tenant/messages');
+                } catch (error) {
+                    console.error('Failed to parse pending chat:', error);
+                }
+            }
+        }
+    }, [conversations]);
 
     if (loading) {
         return (

@@ -335,7 +335,10 @@ function TenantSearchContent() {
                                         <p className="text-gray-500 dark:text-gray-400">Owner</p>
                                         <p className="font-semibold text-gray-900 dark:text-white">{property.owner.name}</p>
                                     </div>
-                                    <button className="btn-primary text-sm py-2">
+                                    <button
+                                        onClick={() => window.location.href = `/tenant/messages?propertyId=${property._id}&ownerId=${property.owner._id}`}
+                                        className="btn-primary text-sm py-2"
+                                    >
                                         Contact Owner
                                     </button>
                                 </div>
