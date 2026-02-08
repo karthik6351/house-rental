@@ -2,7 +2,7 @@ const rateLimit = require('express-rate-limit');
 const express = require('express');
 const router = express.Router();
 const { authenticate, requireOwner } = require('../middleware/auth');
-const { upload, optimizeImages } = require('../middleware/uploadGridFS');
+const { getUpload, optimizeImages } = require('../middleware/uploadGridFS');
 const {
     createProperty,
     getMyProperties,
@@ -31,7 +31,11 @@ router.post(
     authenticate,
     requireOwner,
     createPropertyLimiter,
-    upload.array('images', 10),
+    (req, res, next) => {
+        // Get upload instance dynamically after GridFS is initialized
+        const upload = getUpload();
+        upload.array('images', 10)(req, res, next);
+    },
     optimizeImages,
     createProperty
 );
@@ -68,7 +72,11 @@ router.put(
     '/:id',
     authenticate,
     requireOwner,
-    upload.array('images', 10),
+    (req, res, next) => {
+        // Get upload instance dynamically after GridFS is initialized
+        const upload = getUpload();
+        upload.array('images', 10)(req, res, next);
+    },
     optimizeImages,
     updateProperty
 );

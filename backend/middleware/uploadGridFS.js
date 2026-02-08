@@ -5,7 +5,7 @@ const { GridFsStorage } = require('multer-gridfs-storage');
 const Grid = require('gridfs-stream');
 
 // GridFS setup
-let gfs, gridfsBucket;
+let gfs, gridfsBucket, storage, upload;
 
 // Initialize GridFS after MongoDB connection
 const initGridFS = () => {
@@ -19,49 +19,50 @@ const initGridFS = () => {
         gfs = Grid(conn.db, mongoose.mongo);
         gfs.collection('propertyImages');
 
+        // Initialize storage after connection is established
+        if (!storage) {
+            storage = new GridFsStorage({
+                db: conn.db,
+                file: (req, file) => {
+                    return {
+                        filename: `${Date.now()}-${file.originalname}`,
+                        bucketName: 'propertyImages',
+                        metadata: {
+                            originalName: file.originalname,
+                            uploadedBy: req.user?.userId,
+                            uploadedAt: new Date()
+                        }
+                    };
+                }
+            });
+
+            // File filter - only allow images
+            const fileFilter = (req, file, cb) => {
+                const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+
+                if (allowedTypes.includes(file.mimetype)) {
+                    cb(null, true);
+                } else {
+                    cb(new Error('Invalid file type. Only JPEG, PNG, and WebP images are allowed.'), false);
+                }
+            };
+
+            // Configure multer with GridFS storage
+            upload = multer({
+                storage: storage,
+                fileFilter: fileFilter,
+                limits: {
+                    fileSize: 10 * 1024 * 1024, // 10MB
+                    files: 10
+                }
+            });
+        }
+
         console.log('✅ GridFS initialized successfully');
     } else {
         console.error('❌ MongoDB not connected, GridFS initialization failed');
     }
 };
-
-// Storage configuration for GridFS
-const storage = new GridFsStorage({
-    url: process.env.MONGO_URI,
-    options: { useNewUrlParser: true, useUnifiedTopology: true },
-    file: (req, file) => {
-        return {
-            filename: `${Date.now()}-${file.originalname}`,
-            bucketName: 'propertyImages',
-            metadata: {
-                originalName: file.originalname,
-                uploadedBy: req.user?.userId,
-                uploadedAt: new Date()
-            }
-        };
-    }
-});
-
-// File filter - only allow images
-const fileFilter = (req, file, cb) => {
-    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-
-    if (allowedTypes.includes(file.mimetype)) {
-        cb(null, true);
-    } else {
-        cb(new Error('Invalid file type. Only JPEG, PNG, and WebP images are allowed.'), false);
-    }
-};
-
-// Configure multer with GridFS storage
-const upload = multer({
-    storage: storage,
-    fileFilter: fileFilter,
-    limits: {
-        fileSize: 10 * 1024 * 1024, // 10MB
-        files: 10
-    }
-});
 
 // Middleware to optimize images after upload to GridFS
 const optimizeImages = async (req, res, next) => {
@@ -134,11 +135,20 @@ const optimizeImages = async (req, res, next) => {
     }
 };
 
+
+// Get upload instance (must be called after initGridFS)
+const getUpload = () => {
+    if (!upload) {
+        throw new Error('Upload not initialized. Call initGridFS() first.');
+    }
+    return upload;
+};
+
 // Get GridFS bucket instance
 const getGridFSBucket = () => gridfsBucket;
 
 module.exports = {
-    upload,
+    getUpload,
     optimizeImages,
     initGridFS,
     getGridFSBucket
