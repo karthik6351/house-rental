@@ -129,10 +129,17 @@ app.get('/uploads/properties/:filename', (req, res) => {
 
 
 // Routes
-app.use('/api/auth', require('./routes/auth'));
-app.use('/api/properties', require('./routes/properties'));
-app.use('/api/chat', require('./routes/chat'));
-app.use('/api/images', require('./routes/images')); // GridFS image serving
+const authRoutes = require('./routes/auth');
+const propertyRoutes = require('./routes/properties');
+const chatRoutes = require('./routes/chat');
+const imageRoutes = require('./routes/images');
+const reviewRoutes = require('./routes/reviews');
+
+app.use('/api/auth', authRoutes);
+app.use('/api/properties', propertyRoutes);
+app.use('/api/chat', chatRoutes);
+app.use('/api/images', imageRoutes); // GridFS image serving
+app.use('/api/reviews', reviewRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

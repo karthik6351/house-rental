@@ -139,17 +139,15 @@ function NewPropertyContent() {
 
                         <div>
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                Description *
+                                Description
                             </label>
                             <textarea
                                 name="description"
                                 value={formData.description}
                                 onChange={handleChange}
-                                required
-                                minLength={20}
                                 rows={4}
                                 className="input-field resize-none"
-                                placeholder="Describe your property..."
+                                placeholder="Describe your property... (optional)"
                             />
                         </div>
 
@@ -199,17 +197,16 @@ function NewPropertyContent() {
 
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                    Area (sq ft) *
+                                    Area (sq ft)
                                 </label>
                                 <input
                                     type="number"
                                     name="area"
                                     value={formData.area}
                                     onChange={handleChange}
-                                    required
-                                    min="1"
+                                    min="0"
                                     className="input-field"
-                                    placeholder="1200"
+                                    placeholder="1200 (optional)"
                                 />
                             </div>
                         </div>
@@ -217,52 +214,49 @@ function NewPropertyContent() {
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                    Bedrooms *
+                                    Bedrooms
                                 </label>
                                 <input
                                     type="number"
                                     name="bedrooms"
                                     value={formData.bedrooms}
                                     onChange={handleChange}
-                                    required
                                     min="0"
                                     max="50"
                                     className="input-field"
-                                    placeholder="3"
+                                    placeholder="3 (optional)"
                                 />
                             </div>
 
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                    Bathrooms *
+                                    Bathrooms
                                 </label>
                                 <input
                                     type="number"
                                     name="bathrooms"
                                     value={formData.bathrooms}
                                     onChange={handleChange}
-                                    required
                                     min="0"
                                     max="50"
                                     className="input-field"
-                                    placeholder="2"
+                                    placeholder="2 (optional)"
                                 />
                             </div>
 
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                    Furnishing *
+                                    Furnishing
                                 </label>
                                 <select
                                     name="furnishing"
                                     value={formData.furnishing}
                                     onChange={handleChange}
-                                    required
                                     className="input-field"
                                 >
                                     <option value="unfurnished">Unfurnished</option>
                                     <option value="semi-furnished">Semi-furnished</option>
-                                    <option value="furnished">Furnished</option>
+                                    <option value="fully-furnished">Fully-furnished</option>
                                 </select>
                             </div>
                         </div>

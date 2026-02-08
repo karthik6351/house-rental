@@ -15,9 +15,9 @@ const propertySchema = new mongoose.Schema({
     },
     description: {
         type: String,
-        required: [true, 'Description is required'],
+        required: false,  // Made optional
         trim: true,
-        minlength: [20, 'Description must be at least 20 characters'],
+        default: 'No description provided',
         maxlength: [2000, 'Description cannot exceed 2000 characters']
     },
     address: {
@@ -29,11 +29,12 @@ const propertySchema = new mongoose.Schema({
         type: {
             type: String,
             enum: ['Point'],
-            default: 'Point'
+            required: true
         },
         coordinates: {
             type: [Number], // [longitude, latitude]
-            required: [true, 'Location coordinates are required']
+            required: true,
+            index: '2dsphere'
         }
     },
     price: {
@@ -43,28 +44,32 @@ const propertySchema = new mongoose.Schema({
     },
     bedrooms: {
         type: Number,
-        required: [true, 'Number of bedrooms is required'],
+        required: false,  // Made optional
+        default: 1,
         min: [0, 'Bedrooms cannot be negative'],
-        max: [50, 'Bedrooms seems unrealistic']
+        max: [50, 'Bedrooms cannot exceed 50']
     },
     bathrooms: {
         type: Number,
-        required: [true, 'Number of bathrooms is required'],
+        required: false,  // Made optional
+        default: 1,
         min: [0, 'Bathrooms cannot be negative'],
-        max: [50, 'Bathrooms seems unrealistic']
+        max: [20, 'Bathrooms cannot exceed 20']
     },
     area: {
         type: Number,
-        required: [true, 'Area is required'],
-        min: [1, 'Area must be at least 1 sq ft']
+        required: false,  // Made optional
+        default: 0,
+        min: [0, 'Area cannot be negative']
     },
     furnishing: {
         type: String,
+        required: false,  // Made optional
+        default: 'unfurnished',
         enum: {
-            values: ['furnished', 'semi-furnished', 'unfurnished'],
-            message: 'Furnishing must be furnished, semi-furnished, or unfurnished'
-        },
-        required: [true, 'Furnishing status is required']
+            values: ['fully-furnished', 'semi-furnished', 'unfurnished'],
+            message: 'Furnishing must be fully-furnished, semi-furnished, or unfurnished'
+        }
     },
     available: {
         type: Boolean,
@@ -89,8 +94,19 @@ const propertySchema = new mongoose.Schema({
             validator: function (v) {
                 return v.length <= 10;
             },
-            message: 'Cannot upload more than 10 images per property'
+            message: 'Cannot upload more than 10 images'
         }
+    },
+    averageRating: {
+        type: Number,
+        default: 0,
+        min: [0, 'Rating cannot be negative'],
+        max: [5, 'Rating cannot exceed 5']
+    },
+    totalReviews: {
+        type: Number,
+        default: 0,
+        min: [0, 'Reviews count cannot be negative']
     },
     createdAt: {
         type: Date,

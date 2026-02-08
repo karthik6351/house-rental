@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { propertyAPI } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
@@ -25,11 +26,15 @@ interface Property {
     owner: {
         _id: string;
         name: string;
+        email: string;
         phone: string;
     };
+    averageRating: number;
+    totalReviews: number;
 }
 
 function TenantSearchContent() {
+    const router = useRouter();
     const { user, logout } = useAuth();
     const [properties, setProperties] = useState<Property[]>([]);
     const [isLoading, setIsLoading] = useState(false);
@@ -283,7 +288,11 @@ function TenantSearchContent() {
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {properties.map((property) => (
-                            <div key={property._id} className="card hover:shadow-2xl transition-all cursor-pointer group">
+                            <div
+                                key={property._id}
+                                className="card hover:shadow-2xl transition-all cursor-pointer group"
+                                onClick={() => router.push(`/property/${property._id}`)}
+                            >
                                 <div className="relative h-56 bg-gray-200 dark:bg-gray-700 rounded-lg overflow-hidden mb-4">
                                     {property.images[0] ? (
                                         <img
@@ -308,9 +317,40 @@ function TenantSearchContent() {
                                 <h3 className="font-bold text-lg text-gray-900 dark:text-white mb-2 group-hover:text-primary-600 transition-colors">
                                     {property.title}
                                 </h3>
-                                <p className="text-gray-600 dark:text-gray-400 text-sm mb-3 line-clamp-2">
+                                <p className="text-gray-600 dark:text-gray-400 text-sm mb-2 line-clamp-2">
                                     {property.description}
                                 </p>
+
+                                {/* Rating Display */}
+                                {property.totalReviews > 0 && (
+                                    <div className="flex items-center gap-2 mb-3">
+                                        <div className="flex items-center">
+                                            {[...Array(5)].map((_, i) => (
+                                                <svg
+                                                    key={i}
+                                                    className={`w-4 h-4 ${i < Math.round(property.averageRating)
+                                                        ? 'text-yellow-500 fill-yellow-500'
+                                                        : 'text-gray-300 dark:text-gray-600'
+                                                        }`}
+                                                    xmlns="http://www.w3.org/2000/svg"
+                                                    viewBox="0 0 24 24"
+                                                    stroke="currentColor"
+                                                    strokeWidth="1.5"
+                                                >
+                                                    <path
+                                                        strokeLinecap="round"
+                                                        strokeLinejoin="round"
+                                                        d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z"
+                                                    />
+                                                </svg>
+                                            ))}
+                                        </div>
+                                        <span className="text-sm text-gray-600 dark:text-gray-400">
+                                            {property.averageRating.toFixed(1)} ({property.totalReviews} {property.totalReviews === 1 ? 'review' : 'reviews'})
+                                        </span>
+                                    </div>
+                                )}
+
                                 <p className="text-gray-500 dark:text-gray-500 text-sm mb-4">
                                     📍 {property.address}
                                 </p>
@@ -336,8 +376,11 @@ function TenantSearchContent() {
                                         <p className="font-semibold text-gray-900 dark:text-white">{property.owner.name}</p>
                                     </div>
                                     <button
-                                        onClick={() => window.location.href = `/tenant/messages?propertyId=${property._id}&ownerId=${property.owner._id}`}
-                                        className="btn-primary text-sm py-2"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            window.location.href = `/tenant/messages?propertyId=${property._id}&ownerId=${property.owner._id}`;
+                                        }}
+                                        className="btn-primary text-sm py-2 hover:shadow-lg transition-shadow"
                                     >
                                         Contact Owner
                                     </button>

@@ -74,6 +74,7 @@ export const authAPI = {
 export const propertyAPI = {
     create: (formData: FormData) => api.post('/properties', formData),
     getMyProperties: () => api.get('/properties/my-properties'),
+    getProperty: (id: string) => api.get(`/properties/${id}`),
     update: (id: string, formData: FormData) => api.put(`/properties/${id}`, formData),
     delete: (id: string) => api.delete(`/properties/${id}`),
     toggleAvailability: (id: string) => api.patch(`/properties/${id}/availability`),
@@ -89,3 +90,15 @@ export const chatAPI = {
     sendMessage: (data: any) => api.post('/chat/messages', data),
 };
 
+export const reviewAPI = {
+    create: (data: { propertyId: string; rating: number; comment: string }) =>
+        api.post('/reviews', data),
+    getPropertyReviews: (propertyId: string, params?: { page?: number; limit?: number }) =>
+        api.get(`/reviews/property/${propertyId}`, { params }),
+    getMyReview: (propertyId: string) =>
+        api.get(`/reviews/my-review/${propertyId}`),
+    update: (id: string, data: { rating?: number; comment?: string }) =>
+        api.put(`/reviews/${id}`, data),
+    delete: (id: string) =>
+        api.delete(`/reviews/${id}`),
+};

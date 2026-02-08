@@ -108,8 +108,8 @@ const createProperty = async (req, res) => {
             lng: providedLng
         } = req.body;
 
-        // Validate required fields
-        const requiredFields = ['title', 'description', 'address', 'price', 'bedrooms', 'bathrooms', 'area', 'furnishing'];
+        // Validate required fields - only essential fields are required
+        const requiredFields = ['title', 'address', 'price'];
         const missingFields = requiredFields.filter(field => !req.body[field]);
 
         if (missingFields.length > 0) {
@@ -145,23 +145,27 @@ const createProperty = async (req, res) => {
 
         console.log(`📸 Uploaded ${images.length} images to GridFS:`, images);
 
-        // Create property
-        const property = await Property.create({
+        // Create property with optional field handling
+        const propertyData = {
             owner: req.user.userId,
             title,
-            description,
+            description: description || 'No description provided',
             address,
             location: {
                 type: 'Point',
                 coordinates: [lng, lat] // GeoJSON format: [longitude, latitude]
             },
             price: parseFloat(price),
-            bedrooms: parseInt(bedrooms),
-            bathrooms: parseInt(bathrooms),
-            area: parseFloat(area),
-            furnishing,
             images
-        });
+        };
+
+        // Add optional fields only if provided
+        if (bedrooms) propertyData.bedrooms = parseInt(bedrooms);
+        if (bathrooms) propertyData.bathrooms = parseInt(bathrooms);
+        if (area) propertyData.area = parseFloat(area);
+        if (furnishing) propertyData.furnishing = furnishing;
+
+        const property = await Property.create(propertyData);
 
         // Populate owner details
         await property.populate('owner', 'name email phone');
