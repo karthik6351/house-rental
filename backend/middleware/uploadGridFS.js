@@ -24,15 +24,20 @@ const initGridFS = () => {
             storage = new GridFsStorage({
                 db: conn.db,
                 file: (req, file) => {
-                    return {
-                        filename: `${Date.now()}-${file.originalname}`,
-                        bucketName: 'propertyImages',
-                        metadata: {
-                            originalName: file.originalname,
-                            uploadedBy: req.user?.userId,
-                            uploadedAt: new Date()
-                        }
-                    };
+                    // Return a Promise for async file metadata generation
+                    return new Promise((resolve, reject) => {
+                        const filename = `${Date.now()}-${file.originalname}`;
+                        const fileInfo = {
+                            filename: filename,
+                            bucketName: 'propertyImages',
+                            metadata: {
+                                originalName: file.originalname,
+                                uploadedBy: req.user?.userId,
+                                uploadedAt: new Date()
+                            }
+                        };
+                        resolve(fileInfo);
+                    });
                 }
             });
 
