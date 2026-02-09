@@ -10,6 +10,11 @@ interface Property {
     _id: string;
     title: string;
     address: string;
+    price: number;
+    bedrooms: number;
+    bathrooms: number;
+    area: number;
+    images: string[];
     location: {
         coordinates: [number, number];
     };
