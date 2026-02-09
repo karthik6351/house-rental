@@ -105,3 +105,9 @@ export const reviewAPI = {
     delete: (id: string) =>
         api.delete(`/reviews/${id}`),
 };
+
+export const favoriteAPI = {
+    toggle: (propertyId: string) => api.post(`/favorites/${propertyId}`),
+    getMyFavorites: () => api.get('/favorites'),
+    checkStatus: (propertyId: string) => api.get(`/favorites/${propertyId}/status`),
+};

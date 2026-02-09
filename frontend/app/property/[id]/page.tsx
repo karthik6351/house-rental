@@ -8,6 +8,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { getImageUrl } from '@/lib/urlUtils';
 import dynamic from 'next/dynamic';
 import ReviewSection from '@/components/ReviewSection';
+import FavoriteButton from '@/components/FavoriteButton';
 
 const PropertyMap = dynamic(() => import('@/components/PropertyMap'), { ssr: false });
 
@@ -168,144 +169,148 @@ function PropertyDetailContent() {
                                         {property.address}
                                     </p>
                                 </div>
-                                <div className="text-right">
-                                    <p className="text-4xl font-bold text-primary-600">
-                                        ₹{property.price.toLocaleString()}
-                                    </p>
-                                    <p className="text-gray-500 dark:text-gray-400">per month</p>
-                                </div>
                             </div>
-
-                            {/* Property Features */}
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 py-4 border-t border-b border-gray-200 dark:border-gray-700">
-                                <div className="text-center">
-                                    <div className="bg-primary-100 dark:bg-primary-900 p-3 rounded-lg inline-flex mb-2">
-                                        <svg className="w-6 h-6 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                                        </svg>
-                                    </div>
-                                    <p className="text-gray-600 dark:text-gray-400 text-sm">Bedrooms</p>
-                                    <p className="font-bold text-lg text-gray-900 dark:text-white">{property.bedrooms}</p>
-                                </div>
-                                <div className="text-center">
-                                    <div className="bg-blue-100 dark:bg-blue-900 p-3 rounded-lg inline-flex mb-2">
-                                        <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                        </svg>
-                                    </div>
-                                    <p className="text-gray-600 dark:text-gray-400 text-sm">Bathrooms</p>
-                                    <p className="font-bold text-lg text-gray-900 dark:text-white">{property.bathrooms}</p>
-                                </div>
-                                <div className="text-center">
-                                    <div className="bg-green-100 dark:bg-green-900 p-3 rounded-lg inline-flex mb-2">
-                                        <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-                                        </svg>
-                                    </div>
-                                    <p className="text-gray-600 dark:text-gray-400 text-sm">Area</p>
-                                    <p className="font-bold text-lg text-gray-900 dark:text-white">{property.area} sqft</p>
-                                </div>
-                                <div className="text-center">
-                                    <div className="bg-purple-100 dark:bg-purple-900 p-3 rounded-lg inline-flex mb-2">
-                                        <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-                                        </svg>
-                                    </div>
-                                    <p className="text-gray-600 dark:text-gray-400 text-sm">Furnishing</p>
-                                    <p className="font-bold text-sm text-gray-900 dark:text-white capitalize">{property.furnishing}</p>
-                                </div>
-                            </div>
-
-                            {/* Availability Status */}
-                            <div className="mt-4">
-                                <span className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold ${property.available
-                                    ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                                    : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-                                    }`}>
-                                    <span className={`w-2 h-2 rounded-full ${property.available ? 'bg-green-600' : 'bg-red-600'}`}></span>
-                                    {property.available ? 'Available for Rent' : 'Currently Unavailable'}
-                                </span>
+                            <div className="text-right flex flex-col items-end gap-2">
+                                <p className="text-4xl font-bold text-primary-600">
+                                    ₹{property.price.toLocaleString()}
+                                </p>
+                                <p className="text-gray-500 dark:text-gray-400">per month</p>
+                                {user?.role === 'tenant' && (
+                                    <FavoriteButton propertyId={property._id} className="mt-2" />
+                                )}
                             </div>
                         </div>
 
-                        {/* Description */}
-                        <div className="card">
-                            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Description</h2>
-                            <p className="text-gray-600 dark:text-gray-400 leading-relaxed whitespace-pre-line">
-                                {property.description}
-                            </p>
-                        </div>
-
-                        {/* Location Map */}
-                        <div className="card">
-                            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Location</h2>
-                            <div className="h-96 rounded-lg overflow-hidden">
-                                <PropertyMap properties={[property]} center={{ lat: property.location.coordinates[1], lng: property.location.coordinates[0] }} />
+                        {/* Property Features */}
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 py-4 border-t border-b border-gray-200 dark:border-gray-700">
+                            <div className="text-center">
+                                <div className="bg-primary-100 dark:bg-primary-900 p-3 rounded-lg inline-flex mb-2">
+                                    <svg className="w-6 h-6 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                                    </svg>
+                                </div>
+                                <p className="text-gray-600 dark:text-gray-400 text-sm">Bedrooms</p>
+                                <p className="font-bold text-lg text-gray-900 dark:text-white">{property.bedrooms}</p>
+                            </div>
+                            <div className="text-center">
+                                <div className="bg-blue-100 dark:bg-blue-900 p-3 rounded-lg inline-flex mb-2">
+                                    <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                    </svg>
+                                </div>
+                                <p className="text-gray-600 dark:text-gray-400 text-sm">Bathrooms</p>
+                                <p className="font-bold text-lg text-gray-900 dark:text-white">{property.bathrooms}</p>
+                            </div>
+                            <div className="text-center">
+                                <div className="bg-green-100 dark:bg-green-900 p-3 rounded-lg inline-flex mb-2">
+                                    <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                                    </svg>
+                                </div>
+                                <p className="text-gray-600 dark:text-gray-400 text-sm">Area</p>
+                                <p className="font-bold text-lg text-gray-900 dark:text-white">{property.area} sqft</p>
+                            </div>
+                            <div className="text-center">
+                                <div className="bg-purple-100 dark:bg-purple-900 p-3 rounded-lg inline-flex mb-2">
+                                    <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                                    </svg>
+                                </div>
+                                <p className="text-gray-600 dark:text-gray-400 text-sm">Furnishing</p>
+                                <p className="font-bold text-sm text-gray-900 dark:text-white capitalize">{property.furnishing}</p>
                             </div>
                         </div>
 
-                        {/* Reviews Section */}
-                        <ReviewSection
-                            propertyId={property._id}
-                            averageRating={property.averageRating}
-                            totalReviews={property.totalReviews}
-                        />
+                        {/* Availability Status */}
+                        <div className="mt-4">
+                            <span className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold ${property.available
+                                ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                                : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                                }`}>
+                                <span className={`w-2 h-2 rounded-full ${property.available ? 'bg-green-600' : 'bg-red-600'}`}></span>
+                                {property.available ? 'Available for Rent' : 'Currently Unavailable'}
+                            </span>
+                        </div>
                     </div>
 
-                    {/* Sidebar - Owner Info */}
-                    <div className="lg:col-span-1">
-                        <div className="card sticky top-24">
-                            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Property Owner</h2>
+                    {/* Description */}
+                    <div className="card">
+                        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Description</h2>
+                        <p className="text-gray-600 dark:text-gray-400 leading-relaxed whitespace-pre-line">
+                            {property.description}
+                        </p>
+                    </div>
 
-                            <div className="bg-gradient-to-br from-primary-50 to-primary-100 dark:from-primary-900 dark:to-primary-800 p-6 rounded-lg mb-4">
-                                <div className="flex items-center gap-3 mb-4">
-                                    <div className="w-16 h-16 bg-primary-600 rounded-full flex items-center justify-center text-white text-2xl font-bold">
-                                        {property.owner.name.charAt(0).toUpperCase()}
-                                    </div>
-                                    <div>
-                                        <p className="font-bold text-gray-900 dark:text-white text-lg">{property.owner.name}</p>
-                                        <p className="text-sm text-gray-600 dark:text-gray-300">Property Owner</p>
-                                    </div>
+                    {/* Location Map */}
+                    <div className="card">
+                        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Location</h2>
+                        <div className="h-96 rounded-lg overflow-hidden">
+                            <PropertyMap properties={[property]} center={{ lat: property.location.coordinates[1], lng: property.location.coordinates[0] }} />
+                        </div>
+                    </div>
+
+                    {/* Reviews Section */}
+                    <ReviewSection
+                        propertyId={property._id}
+                        averageRating={property.averageRating}
+                        totalReviews={property.totalReviews}
+                    />
+                </div>
+
+                {/* Sidebar - Owner Info */}
+                <div className="lg:col-span-1">
+                    <div className="card sticky top-24">
+                        <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Property Owner</h2>
+
+                        <div className="bg-gradient-to-br from-primary-50 to-primary-100 dark:from-primary-900 dark:to-primary-800 p-6 rounded-lg mb-4">
+                            <div className="flex items-center gap-3 mb-4">
+                                <div className="w-16 h-16 bg-primary-600 rounded-full flex items-center justify-center text-white text-2xl font-bold">
+                                    {property.owner.name.charAt(0).toUpperCase()}
                                 </div>
-
-                                <div className="space-y-3 mb-4">
-                                    <div className="flex items-center gap-2 text-gray-700 dark:text-gray-200">
-                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                        </svg>
-                                        <span className="text-sm">{property.owner.email}</span>
-                                    </div>
-                                    <div className="flex items-center gap-2 text-gray-700 dark:text-gray-200">
-                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                                        </svg>
-                                        <span className="text-sm">{property.owner.phone}</span>
-                                    </div>
+                                <div>
+                                    <p className="font-bold text-gray-900 dark:text-white text-lg">{property.owner.name}</p>
+                                    <p className="text-sm text-gray-600 dark:text-gray-300">Property Owner</p>
                                 </div>
                             </div>
 
-                            {user?.role === 'tenant' && property.available && (
-                                <button
-                                    onClick={handleContactOwner}
-                                    className="w-full btn-primary py-3 text-lg font-semibold hover:shadow-lg transition-all"
-                                >
-                                    <svg className="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                            <div className="space-y-3 mb-4">
+                                <div className="flex items-center gap-2 text-gray-700 dark:text-gray-200">
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                                     </svg>
-                                    Contact Owner
-                                </button>
-                            )}
-
-                            {!property.available && (
-                                <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 text-center">
-                                    <p className="text-red-800 dark:text-red-200 font-semibold">This property is currently unavailable</p>
+                                    <span className="text-sm">{property.owner.email}</span>
                                 </div>
-                            )}
+                                <div className="flex items-center gap-2 text-gray-700 dark:text-gray-200">
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                                    </svg>
+                                    <span className="text-sm">{property.owner.phone}</span>
+                                </div>
+                            </div>
                         </div>
+
+                        {user?.role === 'tenant' && property.available && (
+                            <button
+                                onClick={handleContactOwner}
+                                className="w-full btn-primary py-3 text-lg font-semibold hover:shadow-lg transition-all"
+                            >
+                                <svg className="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                                </svg>
+                                Contact Owner
+                            </button>
+                        )}
+
+                        {!property.available && (
+                            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 text-center">
+                                <p className="text-red-800 dark:text-red-200 font-semibold">This property is currently unavailable</p>
+                            </div>
+                        )}
                     </div>
                 </div>
-            </main>
         </div>
+            </main >
+        </div >
     );
 }
 

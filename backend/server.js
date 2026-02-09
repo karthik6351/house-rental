@@ -134,12 +134,14 @@ const propertyRoutes = require('./routes/properties');
 const chatRoutes = require('./routes/chat');
 const imageRoutes = require('./routes/images');
 const reviewRoutes = require('./routes/reviews');
+const favoritesRoutes = require('./routes/favorites'); // New Favorites Route
 
 app.use('/api/auth', authRoutes);
 app.use('/api/properties', propertyRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/images', imageRoutes); // GridFS image serving
 app.use('/api/reviews', reviewRoutes);
+app.use('/api/favorites', favoritesRoutes); // New Favorites Route
 
 // Health check
 app.get('/api/health', (req, res) => {
