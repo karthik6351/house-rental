@@ -122,30 +122,34 @@ function NewPropertyContent() {
 
                     <form onSubmit={handleSubmit} className="space-y-6">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            <label htmlFor="title" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                 Property Title *
                             </label>
                             <input
+                                id="title"
                                 type="text"
                                 name="title"
                                 value={formData.title}
                                 onChange={handleChange}
                                 required
                                 minLength={5}
+                                autoComplete="organization-title"
                                 className="input-field"
                                 placeholder="Beautiful 3BHK in Downtown"
                             />
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            <label htmlFor="description" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                 Description
                             </label>
                             <textarea
+                                id="description"
                                 name="description"
                                 value={formData.description}
                                 onChange={handleChange}
                                 rows={4}
+                                autoComplete="off"
                                 className="input-field resize-none"
                                 placeholder="Describe your property... (optional)"
                             />
@@ -164,15 +168,17 @@ function NewPropertyContent() {
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            <label htmlFor="address" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                 Address * {location && <span className="text-green-600 text-xs">(Auto-filled from map)</span>}
                             </label>
                             <input
+                                id="address"
                                 type="text"
                                 name="address"
                                 value={formData.address}
                                 onChange={handleChange}
                                 required
+                                autoComplete="street-address"
                                 className="input-field"
                                 placeholder="123 Main Street, City, State, ZIP"
                             />
@@ -180,31 +186,35 @@ function NewPropertyContent() {
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                <label htmlFor="price" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                     Monthly Rent (₹) *
                                 </label>
                                 <input
+                                    id="price"
                                     type="number"
                                     name="price"
                                     value={formData.price}
                                     onChange={handleChange}
                                     required
                                     min="0"
+                                    autoComplete="transaction-amount"
                                     className="input-field"
                                     placeholder="25000"
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                <label htmlFor="area" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                     Area (sq ft)
                                 </label>
                                 <input
+                                    id="area"
                                     type="number"
                                     name="area"
                                     value={formData.area}
                                     onChange={handleChange}
                                     min="0"
+                                    autoComplete="off"
                                     className="input-field"
                                     placeholder="1200 (optional)"
                                 />
@@ -213,45 +223,51 @@ function NewPropertyContent() {
 
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                <label htmlFor="bedrooms" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                     Bedrooms
                                 </label>
                                 <input
+                                    id="bedrooms"
                                     type="number"
                                     name="bedrooms"
                                     value={formData.bedrooms}
                                     onChange={handleChange}
                                     min="0"
                                     max="50"
+                                    autoComplete="off"
                                     className="input-field"
                                     placeholder="3 (optional)"
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                <label htmlFor="bathrooms" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                     Bathrooms
                                 </label>
                                 <input
+                                    id="bathrooms"
                                     type="number"
                                     name="bathrooms"
                                     value={formData.bathrooms}
                                     onChange={handleChange}
                                     min="0"
                                     max="50"
+                                    autoComplete="off"
                                     className="input-field"
                                     placeholder="2 (optional)"
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                <label htmlFor="furnishing" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                     Furnishing
                                 </label>
                                 <select
+                                    id="furnishing"
                                     name="furnishing"
                                     value={formData.furnishing}
                                     onChange={handleChange}
+                                    autoComplete="off"
                                     className="input-field"
                                 >
                                     <option value="unfurnished">Unfurnished</option>
@@ -262,10 +278,11 @@ function NewPropertyContent() {
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            <label htmlFor="images" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                 Property Images (Max 10)
                             </label>
                             <input
+                                id="images"
                                 type="file"
                                 accept="image/*"
                                 multiple
