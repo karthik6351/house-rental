@@ -6,6 +6,8 @@ import MessageBubble from './MessageBubble';
 import api from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { io, Socket } from 'socket.io-client';
+import ConfirmDealModal from './ConfirmDealModal';
+import { Property, PropertyStatus } from '@/types/industry';
 
 interface Message {
     _id: string;
@@ -26,16 +28,27 @@ interface ChatInterfaceProps {
     otherUserId: string;
     otherUserName: string;
     propertyTitle: string;
+    property?: {
+        _id: string;
+        title: string;
+        price: number;
+        status?: PropertyStatus;
+        owner?: { _id: string };
+    };
 }
 
-export default function ChatInterface({ propertyId, otherUserId, otherUserName, propertyTitle }: ChatInterfaceProps) {
+export default function ChatInterface({ propertyId, otherUserId, otherUserName, propertyTitle, property }: ChatInterfaceProps) {
     const { user } = useAuth();
     const [messages, setMessages] = useState<Message[]>([]);
     const [newMessage, setNewMessage] = useState('');
     const [loading, setLoading] = useState(true);
     const [sending, setSending] = useState(false);
+    const [showDealModal, setShowDealModal] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const socketRef = useRef<Socket | null>(null);
+
+    // Determine if current user is the owner
+    const isOwner = user?.role === 'owner' && property?.owner?._id === user?._id;
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -133,9 +146,32 @@ export default function ChatInterface({ propertyId, otherUserId, otherUserName, 
         <div className="flex flex-col h-full bg-white">
             {/* Header */}
             <div className="bg-white border-b border-gray-200 px-6 py-4">
-                <h3 className="text-lg font-semibold text-gray-900">{propertyTitle}</h3>
-                <p className="text-sm text-gray-500">{otherUserName}</p>
+                <div className="flex justify-between items-start">
+                    <div>
+                        <h3 className="text-lg font-semibold text-gray-900">{propertyTitle}</h3>
+                        <p className="text-sm text-gray-500">{otherUserName}</p>
+                    </div>
+                    {isOwner && property && property.status !== 'rented' && property.status !== 'archived' && (
+                        <button
+                            onClick={() => setShowDealModal(true)}
+                            className="px-4 py-2   bg-green-600 text-white text-sm font-semibold rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2"
+                        >
+                            🎉 Confirm Deal
+                        </button>
+                    )}
+                </div>
             </div>
+
+            {/* Confirm Deal Modal */}
+            {property && (
+                <ConfirmDealModal
+                    isOpen={showDealModal}
+                    onClose={() => setShowDealModal(false)}
+                    property={property as any}
+                    tenant={{ _id: otherUserId, name: otherUserName, email: '' }}
+                    onSuccess={() => window.location.reload()}
+                />
+            )}
 
             {/* Messages */}
             <div className="flex-1 overflow-y-auto px-6 py-4 bg-gray-50">

@@ -64,12 +64,32 @@ const propertySchema = new mongoose.Schema({
     },
     furnishing: {
         type: String,
-        required: false,  // Made optional
+        required: false,
         default: 'unfurnished',
         enum: {
             values: ['fully-furnished', 'semi-furnished', 'unfurnished'],
             message: 'Furnishing must be fully-furnished, semi-furnished, or unfurnished'
         }
+    },
+    // Property Lifecycle Status
+    status: {
+        type: String,
+        enum: {
+            values: ['available', 'in_discussion', 'approved', 'rented', 'archived'],
+            message: 'Invalid property status'
+        },
+        default: 'available',
+        index: true
+    },
+    confirmedTenant: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    },
+    rentedAt: {
+        type: Date
+    },
+    archivedAt: {
+        type: Date
     },
     available: {
         type: Boolean,
@@ -87,6 +107,18 @@ const propertySchema = new mongoose.Schema({
     deletedBy: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'
+    },
+    // Admin visibility control
+    hidden: {
+        type: Boolean,
+        default: false,
+        index: true
+    },
+    hiddenAt: {
+        type: Date
+    },
+    hiddenReason: {
+        type: String
     },
     images: {
         type: [String],

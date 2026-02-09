@@ -9,6 +9,7 @@ import dynamic from 'next/dynamic';
 import { getImageUrl } from '@/lib/urlUtils';
 import { Search, MapPin, Home, DollarSign, Bed, Bath, Maximize2, Map } from 'lucide-react';
 import MapModal from '@/components/MapModal';
+import NotificationBell from '@/components/NotificationBell';
 const PropertyMap = dynamic(() => import('@/components/PropertyMap'), { ssr: false });
 
 interface Property {
@@ -140,6 +141,19 @@ function TenantSearchContent() {
                         <img src="/logo.png" alt="Easy Rent" className="h-10 w-auto" />
                     </div>
                     <div className="flex items-center gap-4">
+                        <NotificationBell className="text-gray-700 dark:text-gray-300" />
+                        <button
+                            onClick={() => router.push('/tenant/messages')}
+                            className="btn-outline text-sm"
+                        >
+                            Messages
+                        </button>
+                        <button
+                            onClick={() => router.push('/tenant/favorites')}
+                            className="btn-outline text-sm"
+                        >
+                            ❤️ Favorites
+                        </button>
                         <p className="text-gray-600 dark:text-gray-400 hidden sm:block">Welcome, {user?.name}</p>
                         <button onClick={logout} className="btn-outline text-sm">Logout</button>
                     </div>

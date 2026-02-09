@@ -17,11 +17,25 @@ const authenticate = async (req, res, next) => {
         // Verify token
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-        // Attach user info to request
-        req.user = {
-            userId: decoded.userId,
-            role: decoded.role
-        };
+        // Fetch full user from database for suspension check
+        const user = await User.findById(decoded.userId).select('-password');
+        if (!user) {
+            return res.status(401).json({
+                success: false,
+                message: 'User not found.'
+            });
+        }
+
+        // Check if user is suspended
+        if (user.suspended) {
+            return res.status(403).json({
+                success: false,
+                message: 'Your account has been suspended. Please contact support.'
+            });
+        }
+
+        // Attach full user to request
+        req.user = user;
 
         next();
     } catch (error) {
@@ -44,6 +58,9 @@ const authenticate = async (req, res, next) => {
         });
     }
 };
+
+// Alias for authenticate (used by new routes)
+const verifyToken = authenticate;
 
 // Require owner role
 const requireOwner = (req, res, next) => {
@@ -83,12 +100,33 @@ const requireTenant = (req, res, next) => {
     next();
 };
 
+// Require admin role
+const requireAdmin = (req, res, next) => {
+    if (!req.user) {
+        return res.status(401).json({
+            success: false,
+            message: 'Authentication required.'
+        });
+    }
+
+    if (req.user.role !== 'admin') {
+        return res.status(403).json({
+            success: false,
+            message: 'Access forbidden. Admin role required.'
+        });
+    }
+
+    next();
+};
+
 // Allow both roles (just needs to be authenticated)
 const requireAuth = authenticate;
 
 module.exports = {
     authenticate,
+    verifyToken,
     requireOwner,
     requireTenant,
+    requireAdmin,
     requireAuth
 };

@@ -31,10 +31,21 @@ const userSchema = new mongoose.Schema({
     role: {
         type: String,
         enum: {
-            values: ['owner', 'tenant'],
-            message: 'Role must be either owner or tenant'
+            values: ['owner', 'tenant', 'admin'],
+            message: 'Role must be owner, tenant, or admin'
         },
         required: [true, 'Role is required']
+    },
+    // Account suspension fields
+    suspended: {
+        type: Boolean,
+        default: false
+    },
+    suspendedAt: {
+        type: Date
+    },
+    suspensionReason: {
+        type: String
     },
     createdAt: {
         type: Date,

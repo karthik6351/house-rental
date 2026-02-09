@@ -135,14 +135,22 @@ const propertyRoutes = require('./routes/properties');
 const chatRoutes = require('./routes/chat');
 const imageRoutes = require('./routes/images');
 const reviewRoutes = require('./routes/reviews');
-const favoritesRoutes = require('./routes/favorites'); // New Favorites Route
+const favoritesRoutes = require('./routes/favorites');
+const dealRoutes = require('./routes/deals');
+const notificationRoutes = require('./routes/notifications');
+const leadRoutes = require('./routes/leads');
+const adminRoutes = require('./routes/admin');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/properties', propertyRoutes);
 app.use('/api/chat', chatRoutes);
-app.use('/api/images', imageRoutes); // GridFS image serving
+app.use('/api/images', imageRoutes);
 app.use('/api/reviews', reviewRoutes);
-app.use('/api/favorites', favoritesRoutes); // New Favorites Route
+app.use('/api/favorites', favoritesRoutes);
+app.use('/api/deals', dealRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/leads', leadRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

@@ -147,7 +147,7 @@ const createProperty = async (req, res) => {
 
         // Create property with optional field handling
         const propertyData = {
-            owner: req.user.userId,
+            owner: req.user._id,
             title,
             description: description || 'No description provided',
             address,
@@ -201,7 +201,7 @@ const createProperty = async (req, res) => {
 // @access  Private (Owner only)
 const getMyProperties = async (req, res) => {
     try {
-        const properties = await Property.find({ owner: req.user.userId })
+        const properties = await Property.find({ owner: req.user._id })
             .sort({ createdAt: -1 })
             .populate('owner', 'name email phone');
 
@@ -250,7 +250,7 @@ const updateProperty = async (req, res) => {
         }
 
         // Verify ownership
-        if (property.owner.toString() !== req.user.userId) {
+        if (property.owner.toString() !== req.user._id.toString()) {
             return res.status(403).json({
                 success: false,
                 message: 'You are not authorized to update this property'
@@ -319,7 +319,7 @@ const deleteProperty = async (req, res) => {
         }
 
         // Verify ownership
-        if (property.owner.toString() !== req.user.userId) {
+        if (property.owner.toString() !== req.user._id.toString()) {
             return res.status(403).json({
                 success: false,
                 message: 'You are not authorized to delete this property'
@@ -329,7 +329,7 @@ const deleteProperty = async (req, res) => {
         // Soft delete by setting flags
         property.deleted = true;
         property.deletedAt = new Date();
-        property.deletedBy = req.user.userId;
+        property.deletedBy = req.user._id;
         property.available = false; // Mark as unavailable too
         await property.save();
 
@@ -365,7 +365,7 @@ const toggleAvailability = async (req, res) => {
         }
 
         // Verify ownership
-        if (property.owner.toString() !== req.user.userId) {
+        if (property.owner.toString() !== req.user._id.toString()) {
             return res.status(403).json({
                 success: false,
                 message: 'You are not authorized to modify this property'
@@ -409,8 +409,13 @@ const searchProperties = async (req, res) => {
             limit = 20
         } = req.query;
 
-        // Build query
-        const query = { available: true };
+        // Build query - exclude unavailable properties
+        const query = {
+            available: true,
+            deleted: { $ne: true },
+            hidden: { $ne: true },
+            status: { $nin: ['rented', 'archived'] }
+        };
 
         // Location-based search
         if (lat && lng) {

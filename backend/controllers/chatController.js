@@ -7,7 +7,7 @@ const User = require('../models/User');
 // @access  Private
 const getConversations = async (req, res) => {
     try {
-        const userId = req.user.userId;
+        const userId = req.user._id;
         const userRole = req.user.role;
 
         if (userRole === 'owner') {
@@ -136,7 +136,7 @@ const getConversations = async (req, res) => {
 const getMessages = async (req, res) => {
     try {
         const { propertyId, otherUserId } = req.params;
-        const userId = req.user.userId;
+        const userId = req.user._id;
 
         // Verify access to this conversation
         const property = await Property.findById(propertyId);
@@ -203,7 +203,8 @@ const getMessages = async (req, res) => {
 const sendMessage = async (req, res) => {
     try {
         const { propertyId, receiverId, content } = req.body;
-        const senderId = req.user.userId;
+        const senderId = req.user._id;
+        const senderRole = req.user.role;
 
         // Validate input
         if (!propertyId || !receiverId || !content) {
@@ -222,6 +223,29 @@ const sendMessage = async (req, res) => {
             });
         }
 
+        // ============ PROPERTY STATUS VALIDATION ============
+        // Cannot message on archived properties
+        if (property.status === 'archived') {
+            return res.status(403).json({
+                success: false,
+                message: 'Cannot send messages for archived properties'
+            });
+        }
+
+        // Cannot message on rented properties (unless you are the confirmed tenant or owner)
+        if (property.status === 'rented') {
+            const isOwner = property.owner.toString() === senderId.toString();
+            const isConfirmedTenant = property.confirmedTenant &&
+                property.confirmedTenant.toString() === senderId.toString();
+
+            if (!isOwner && !isConfirmedTenant) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'This property has been rented. Messaging is disabled.'
+                });
+            }
+        }
+
         // Verify receiver exists
         const receiver = await User.findById(receiverId);
         if (!receiver) {
@@ -229,6 +253,27 @@ const sendMessage = async (req, res) => {
                 success: false,
                 message: 'Receiver not found'
             });
+        }
+
+        // ============ AUTO-CREATE LEAD ============
+        // If a tenant is messaging an owner about a property, auto-create/update lead
+        if (senderRole === 'tenant' && property.owner.toString() === receiverId.toString()) {
+            const Lead = require('../models/Lead');
+            await Lead.findOneAndUpdate(
+                { owner: receiverId, tenant: senderId, property: propertyId },
+                {
+                    $setOnInsert: {
+                        owner: receiverId,
+                        tenant: senderId,
+                        property: propertyId,
+                        stage: 'enquiry',
+                        label: 'warm'
+                    },
+                    lastContactAt: new Date(),
+                    $inc: { totalMessages: 1 }
+                },
+                { upsert: true, new: true }
+            );
         }
 
         // Create message
@@ -241,6 +286,19 @@ const sendMessage = async (req, res) => {
 
         await message.populate('sender', 'name');
         await message.populate('receiver', 'name');
+
+        // ============ CREATE NOTIFICATION ============
+        const Notification = require('../models/Notification');
+        await Notification.createNotification({
+            userId: receiverId,
+            type: 'message',
+            title: 'New Message',
+            body: `${req.user.name} sent you a message about "${property.title}"`,
+            relatedProperty: propertyId,
+            relatedUser: senderId,
+            actionUrl: `/messages/${propertyId}/${senderId}`,
+            category: 'chat'
+        });
 
         res.status(201).json({
             success: true,

@@ -6,6 +6,9 @@ import ProtectedRoute from '@/components/ProtectedRoute';
 import { propertyAPI } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { getImageUrl } from '@/lib/urlUtils';
+import NotificationBell from '@/components/NotificationBell';
+import { PropertyStatusBadge } from '@/components/PropertyStatusManager';
+import { PropertyStatus } from '@/types/industry';
 
 interface Property {
     _id: string;
@@ -16,9 +19,11 @@ interface Property {
     address: string;
     images: string[];
     available: boolean;
+    status: PropertyStatus;
     createdAt: string;
     views: number;
 }
+
 
 function DashboardContent() {
     const router = useRouter();
@@ -76,7 +81,14 @@ function DashboardContent() {
                             <img src="/logo.png" alt="Easy Rent" className="h-10 w-auto" />
                             <p className="text-gray-600 dark:text-gray-400 text-sm hidden sm:block">Welcome back, {user?.name}</p>
                         </div>
-                        <div className="flex gap-3">
+                        <div className="flex gap-3 items-center">
+                            <NotificationBell className="text-gray-700 dark:text-gray-300" />
+                            <button
+                                onClick={() => router.push('/owner/leads')}
+                                className="btn-outline text-sm"
+                            >
+                                🎯 Leads
+                            </button>
                             <button
                                 onClick={() => router.push('/owner/messages')}
                                 className="btn-outline text-sm"
@@ -179,12 +191,7 @@ function DashboardContent() {
                                         </div>
                                     )}
                                     <div className="absolute top-2 right-2">
-                                        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${property.available
-                                            ? 'bg-success-100 text-success-800'
-                                            : 'bg-gray-100 text-gray-800'
-                                            }`}>
-                                            {property.available ? 'Available' : 'Unavailable'}
-                                        </span>
+                                        <PropertyStatusBadge status={property.status || 'available'} />
                                     </div>
                                     <div className="absolute bottom-2 right-2">
                                         <span className="flex items-center gap-1 px-2 py-1 bg-black/50 backdrop-blur-sm text-white text-xs rounded-md">
