@@ -52,7 +52,10 @@ function DashboardContent() {
 
     const toggleAvailability = async (id: string) => {
         try {
-            await propertyAPI.toggleAvailability(id);
+            const property = properties.find(p => p._id === id);
+            if (!property) return;
+
+            await propertyAPI.toggleAvailability(id, !property.available);
             setProperties(properties.map(p =>
                 p._id === id ? { ...p, available: !p.available } : p
             ));
