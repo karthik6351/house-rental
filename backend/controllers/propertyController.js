@@ -628,21 +628,6 @@ const getDeletedProperties = async (req, res) => {
     }
 };
 
-module.exports = {
-    createProperty,
-    getMyProperties,
-    updateProperty,
-    deleteProperty,
-    restoreProperty,
-    getDeletedProperties,
-    toggleAvailability,
-    searchProperties,
-    getProperty,
-    getReverseGeocode,
-    incrementView
-};
-
-
 // @desc    Increment property view count
 // @route   POST /api/properties/:id/view
 // @access  Public
@@ -678,4 +663,21 @@ const incrementView = async (req, res) => {
         });
     }
 };
+
+module.exports = {
+    createProperty,
+    getMyProperties,
+    updateProperty,
+    deleteProperty,
+    restoreProperty,
+    getDeletedProperties,
+    toggleAvailability,
+    searchProperties,
+    getProperty,
+    getReverseGeocode,
+    incrementView
+};
+
+
+
 
