@@ -40,8 +40,9 @@ connectDB().then(() => {
 
 // Security Middleware - Helmet for security headers
 app.use(helmet({
-    contentSecurityPolicy: false, // Disable CSP for now (can configure later)
+    contentSecurityPolicy: false, // Disable CSP for now to avoid breaking maps/images
     crossOriginEmbedderPolicy: false,
+    crossOriginResourcePolicy: { policy: "cross-origin" }, // Allow images to be loaded
 }));
 
 // HTTP request logging

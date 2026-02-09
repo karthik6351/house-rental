@@ -9,6 +9,7 @@ import { getImageUrl } from '@/lib/urlUtils';
 import dynamic from 'next/dynamic';
 import ReviewSection from '@/components/ReviewSection';
 import FavoriteButton from '@/components/FavoriteButton';
+import ShareButton from '@/components/ShareButton';
 
 const PropertyMap = dynamic(() => import('@/components/PropertyMap'), { ssr: false });
 
@@ -95,6 +96,10 @@ function PropertyDetailContent() {
                         Back
                     </button>
                     <div className="flex items-center gap-3">
+                        <ShareButton
+                            title={property.title}
+                            text={`Check out this property: ${property.title} at ${property.address}`}
+                        />
                         <span className="text-sm text-gray-600 dark:text-gray-400">Welcome, {user?.name}</span>
                         <button onClick={() => router.push('/')} className="btn-outline text-sm">
                             Home
