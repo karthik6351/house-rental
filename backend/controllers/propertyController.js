@@ -638,6 +638,44 @@ module.exports = {
     toggleAvailability,
     searchProperties,
     getProperty,
-    getReverseGeocode
+    getReverseGeocode,
+    incrementView
+};
+
+
+// @desc    Increment property view count
+// @route   POST /api/properties/:id/view
+// @access  Public
+const incrementView = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        // Use atomic update to avoid race conditions
+        const property = await Property.findByIdAndUpdate(
+            id,
+            { $inc: { views: 1 } },
+            { new: true, runValidators: true }
+        );
+
+        if (!property) {
+            return res.status(404).json({
+                success: false,
+                message: 'Property not found'
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            views: property.views
+        });
+
+    } catch (error) {
+        console.error('Increment view error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to increment view count',
+            error: error.message
+        });
+    }
 };
 

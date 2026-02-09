@@ -13,7 +13,8 @@ const {
     toggleAvailability,
     searchProperties,
     getProperty,
-    getReverseGeocode
+    getReverseGeocode,
+    incrementView
 } = require('../controllers/propertyController');
 
 // Rate limiting for property creation
@@ -64,6 +65,11 @@ router.get('/reverse-geocode', authenticate, getReverseGeocode);
 // @desc    Get single property
 // @access  Private
 router.get('/:id', authenticate, getProperty);
+
+// @route   POST /api/properties/:id/view
+// @desc    Increment view count
+// @access  Public
+router.post('/:id/view', incrementView);
 
 // @route   PUT /api/properties/:id
 // @desc    Update property

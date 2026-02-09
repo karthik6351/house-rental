@@ -49,6 +49,13 @@ function PropertyDetailContent() {
     useEffect(() => {
         if (params.id) {
             fetchProperty();
+            // Increment view count (basic debounce using session storage)
+            const viewKey = `viewed_${params.id}`;
+            if (!sessionStorage.getItem(viewKey)) {
+                propertyAPI.incrementView(params.id as string)
+                    .then(() => sessionStorage.setItem(viewKey, 'true'))
+                    .catch(err => console.error('Failed to increment view', err));
+            }
         }
     }, [params.id]);
 

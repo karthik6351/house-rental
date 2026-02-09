@@ -108,6 +108,11 @@ const propertySchema = new mongoose.Schema({
         default: 0,
         min: [0, 'Reviews count cannot be negative']
     },
+    views: {
+        type: Number,
+        default: 0,
+        min: [0, 'Views cannot be negative']
+    },
     createdAt: {
         type: Date,
         default: Date.now

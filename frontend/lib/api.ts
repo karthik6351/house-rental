@@ -84,6 +84,7 @@ export const propertyAPI = {
     getProperty: (id: string) => api.get(`/properties/${id}`),
     getById: (id: string) => api.get(`/properties/${id}`), // Alias for getProperty
     getReverseGeocode: (lat: number, lng: number) => api.get('/properties/reverse-geocode', { params: { lat, lng } }),
+    incrementView: (id: string) => api.post(`/properties/${id}/view`),
 };
 
 export const chatAPI = {
