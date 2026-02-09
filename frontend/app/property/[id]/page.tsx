@@ -243,84 +243,84 @@ function PropertyDetailContent() {
                                 {property.available ? 'Available for Rent' : 'Currently Unavailable'}
                             </span>
                         </div>
-                    </div>
 
-                    {/* Description */}
-                    <div className="card">
-                        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Description</h2>
-                        <p className="text-gray-600 dark:text-gray-400 leading-relaxed whitespace-pre-line">
-                            {property.description}
-                        </p>
-                    </div>
 
-                    {/* Location Map */}
-                    <div className="card">
-                        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Location</h2>
-                        <div className="h-96 rounded-lg overflow-hidden">
-                            <PropertyMap properties={[property]} center={{ lat: property.location.coordinates[1], lng: property.location.coordinates[0] }} />
+                        {/* Description */}
+                        <div className="card">
+                            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Description</h2>
+                            <p className="text-gray-600 dark:text-gray-400 leading-relaxed whitespace-pre-line">
+                                {property.description}
+                            </p>
                         </div>
-                    </div>
 
-                    {/* Reviews Section */}
-                    <ReviewSection
-                        propertyId={property._id}
-                        averageRating={property.averageRating}
-                        totalReviews={property.totalReviews}
-                    />
-                </div>
-
-                {/* Sidebar - Owner Info */}
-                <div className="lg:col-span-1">
-                    <div className="card sticky top-24">
-                        <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Property Owner</h2>
-
-                        <div className="bg-gradient-to-br from-primary-50 to-primary-100 dark:from-primary-900 dark:to-primary-800 p-6 rounded-lg mb-4">
-                            <div className="flex items-center gap-3 mb-4">
-                                <div className="w-16 h-16 bg-primary-600 rounded-full flex items-center justify-center text-white text-2xl font-bold">
-                                    {property.owner.name.charAt(0).toUpperCase()}
-                                </div>
-                                <div>
-                                    <p className="font-bold text-gray-900 dark:text-white text-lg">{property.owner.name}</p>
-                                    <p className="text-sm text-gray-600 dark:text-gray-300">Property Owner</p>
-                                </div>
-                            </div>
-
-                            <div className="space-y-3 mb-4">
-                                <div className="flex items-center gap-2 text-gray-700 dark:text-gray-200">
-                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                    </svg>
-                                    <span className="text-sm">{property.owner.email}</span>
-                                </div>
-                                <div className="flex items-center gap-2 text-gray-700 dark:text-gray-200">
-                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                                    </svg>
-                                    <span className="text-sm">{property.owner.phone}</span>
-                                </div>
+                        {/* Location Map */}
+                        <div className="card">
+                            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Location</h2>
+                            <div className="h-96 rounded-lg overflow-hidden">
+                                <PropertyMap properties={[property]} center={{ lat: property.location.coordinates[1], lng: property.location.coordinates[0] }} />
                             </div>
                         </div>
 
-                        {user?.role === 'tenant' && property.available && (
-                            <button
-                                onClick={handleContactOwner}
-                                className="w-full btn-primary py-3 text-lg font-semibold hover:shadow-lg transition-all"
-                            >
-                                <svg className="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                                </svg>
-                                Contact Owner
-                            </button>
-                        )}
+                        {/* Reviews Section */}
+                        <ReviewSection
+                            propertyId={property._id}
+                            averageRating={property.averageRating}
+                            totalReviews={property.totalReviews}
+                        />
+                    </div>
 
-                        {!property.available && (
-                            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 text-center">
-                                <p className="text-red-800 dark:text-red-200 font-semibold">This property is currently unavailable</p>
+                    {/* Sidebar - Owner Info */}
+                    <div className="lg:col-span-1">
+                        <div className="card sticky top-24">
+                            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Property Owner</h2>
+
+                            <div className="bg-gradient-to-br from-primary-50 to-primary-100 dark:from-primary-900 dark:to-primary-800 p-6 rounded-lg mb-4">
+                                <div className="flex items-center gap-3 mb-4">
+                                    <div className="w-16 h-16 bg-primary-600 rounded-full flex items-center justify-center text-white text-2xl font-bold">
+                                        {property.owner.name.charAt(0).toUpperCase()}
+                                    </div>
+                                    <div>
+                                        <p className="font-bold text-gray-900 dark:text-white text-lg">{property.owner.name}</p>
+                                        <p className="text-sm text-gray-600 dark:text-gray-300">Property Owner</p>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-3 mb-4">
+                                    <div className="flex items-center gap-2 text-gray-700 dark:text-gray-200">
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                        </svg>
+                                        <span className="text-sm">{property.owner.email}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2 text-gray-700 dark:text-gray-200">
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                                        </svg>
+                                        <span className="text-sm">{property.owner.phone}</span>
+                                    </div>
+                                </div>
                             </div>
-                        )}
+
+                            {user?.role === 'tenant' && property.available && (
+                                <button
+                                    onClick={handleContactOwner}
+                                    className="w-full btn-primary py-3 text-lg font-semibold hover:shadow-lg transition-all"
+                                >
+                                    <svg className="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                                    </svg>
+                                    Contact Owner
+                                </button>
+                            )}
+
+                            {!property.available && (
+                                <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 text-center">
+                                    <p className="text-red-800 dark:text-red-200 font-semibold">This property is currently unavailable</p>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
-        </div>
             </main >
         </div >
     );

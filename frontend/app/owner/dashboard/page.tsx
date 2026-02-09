@@ -178,6 +178,11 @@ function DashboardContent() {
                                             </svg>
                                         </div>
                                     )}
+                                    <div className="absolute top-2 right-2">
+                                        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${property.available
+                                            ? 'bg-success-100 text-success-800'
+                                            : 'bg-gray-100 text-gray-800'
+                                            }`}>
                                             {property.available ? 'Available' : 'Unavailable'}
                                         </span>
                                     </div>
@@ -222,9 +227,8 @@ function DashboardContent() {
                                     </button>
                                 </div>
                             </div>
-    ))
-}
-                    </div >
+                        ))}
+                    </div>
                 )}
             </main >
         </div >
