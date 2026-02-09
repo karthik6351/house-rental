@@ -82,6 +82,7 @@ export const propertyAPI = {
     search: (params: any) => api.get('/properties/search', { params }),
     searchProperties: (params: any) => api.get('/properties/search', { params }),
     getProperty: (id: string) => api.get(`/properties/${id}`),
+    getById: (id: string) => api.get(`/properties/${id}`), // Alias for getProperty
     getReverseGeocode: (lat: number, lng: number) => api.get('/properties/reverse-geocode', { params: { lat, lng } }),
 };
 
