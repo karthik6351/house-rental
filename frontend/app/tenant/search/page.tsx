@@ -7,7 +7,7 @@ import { propertyAPI } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import dynamic from 'next/dynamic';
 import { getImageUrl } from '@/lib/urlUtils';
-import { Search, MapPin, Home, DollarSign, Bed, Bath, Maximize2, Map } from 'lucide-react';
+import { Search, MapPin, Home, DollarSign, Bed, Bath, Maximize2, Map, ChevronDown, ChevronRight } from 'lucide-react';
 import MapModal from '@/components/MapModal';
 import NotificationBell from '@/components/NotificationBell';
 const PropertyMap = dynamic(() => import('@/components/PropertyMap'), { ssr: false });
@@ -47,6 +47,7 @@ function TenantSearchContent() {
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
     const [isMapModalOpen, setIsMapModalOpen] = useState(false);
+    const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
     const [filters, setFilters] = useState({
         minPrice: '',
         maxPrice: '',
@@ -55,6 +56,11 @@ function TenantSearchContent() {
         minArea: '',
         maxArea: '',
         furnishing: '',
+        propertyType: '',
+        amenities: [] as string[],
+        petFriendly: false,
+        availableFrom: '',
+        radius: '10'
     });
 
     const fetchProperties = async (useLocation = false) => {
@@ -70,6 +76,13 @@ function TenantSearchContent() {
             if (filters.furnishing) params.furnishing = filters.furnishing;
             if (filters.minArea) params.minArea = filters.minArea;
             if (filters.maxArea) params.maxArea = filters.maxArea;
+
+            // Advanced filters
+            if (filters.propertyType) params.propertyType = filters.propertyType;
+            if (filters.amenities.length > 0) params.amenities = filters.amenities.join(',');
+            if (filters.petFriendly) params.petFriendly = 'true';
+            if (filters.availableFrom) params.availableFrom = filters.availableFrom;
+            if (filters.radius && userLocation) params.radius = filters.radius;
 
             if (useLocation && userLocation) {
                 params.lat = userLocation.lat;
@@ -106,9 +119,15 @@ function TenantSearchContent() {
             bathrooms: '',
             minArea: '',
             maxArea: '',
-            furnishing: ''
+            furnishing: '',
+            propertyType: '',
+            amenities: [],
+            petFriendly: false,
+            availableFrom: '',
+            radius: '10'
         });
         setUserLocation(null);
+        setShowAdvancedFilters(false);
         fetchProperties();
     };
 
@@ -246,6 +265,146 @@ function TenantSearchContent() {
                             </select>
                         </div>
                     </div>
+
+                    {/* Advanced Filters Toggle */}
+                    <div className="mt-4">
+                        <button
+                            onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+                            className="flex items-center gap-2 text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 font-medium transition-colors"
+                        >
+                            {showAdvancedFilters ? <ChevronDown className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
+                            <span>Advanced Filters</span>
+                        </button>
+                    </div>
+
+                    {/* Advanced Filters Panel */}
+                    {showAdvancedFilters && (
+                        <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 space-y-4 animate-fadeIn">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {/* Property Type */}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                        Property Type
+                                    </label>
+                                    <select
+                                        name="propertyType"
+                                        value={filters.propertyType}
+                                        onChange={handleFilterChange}
+                                        className="input-field text-sm"
+                                    >
+                                        <option value="">Any</option>
+                                        <option value="apartment">🏢 Apartment</option>
+                                        <option value="house">🏠 House</option>
+                                        <option value="condo">🏘️ Condo</option>
+                                        <option value="studio">🎨 Studio</option>
+                                        <option value="villa">🏰 Villa</option>
+                                        <option value="penthouse">🌃 Penthouse</option>
+                                    </select>
+                                </div>
+
+                                {/* Pet Friendly */}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                        Pet Friendly
+                                    </label>
+                                    <label className="flex items-center space-x-2 cursor-pointer p-3 rounded-lg border-2 border-gray-200 dark:border-gray-700 hover:border-primary-300 dark:hover:border-primary-700 transition-all">
+                                        <input
+                                            type="checkbox"
+                                            name="petFriendly"
+                                            checked={filters.petFriendly}
+                                            onChange={(e) => setFilters({ ...filters, petFriendly: e.target.checked })}
+                                            className="w-5 h-5 text-primary-600 rounded border-gray-300 focus:ring-primary-500"
+                                        />
+                                        <span className="text-gray-700 dark:text-gray-300 font-medium">🐕 Pets Allowed</span>
+                                    </label>
+                                </div>
+
+                                {/* Move-in Date */}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                        📅 Move-in Date
+                                    </label>
+                                    <input
+                                        type="date"
+                                        name="availableFrom"
+                                        value={filters.availableFrom}
+                                        onChange={handleFilterChange}
+                                        className="input-field text-sm"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Amenities Multi-Select */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                                    Amenities
+                                </label>
+                                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                                    {[
+                                        { value: 'wifi', label: 'WiFi', icon: '📶' },
+                                        { value: 'parking', label: 'Parking', icon: '🅿️' },
+                                        { value: 'gym', label: 'Gym', icon: '💪' },
+                                        { value: 'pool', label: 'Pool', icon: '🏊' },
+                                        { value: 'security', label: 'Security', icon: '🔒' },
+                                        { value: '247_water', label: '24/7 Water', icon: '💧' },
+                                        { value: 'power_backup', label: 'Power Backup', icon: '⚡' },
+                                        { value: 'elevator', label: 'Elevator', icon: '🛗' },
+                                        { value: 'garden', label: 'Garden', icon: '🌳' },
+                                        { value: 'playground', label: 'Playground', icon: '🎮' },
+                                        { value: 'clubhouse', label: 'Clubhouse', icon: '🏛️' },
+                                        { value: 'cctv', label: 'CCTV', icon: '📹' }
+                                    ].map((amenity) => (
+                                        <label
+                                            key={amenity.value}
+                                            className={`flex items-center space-x-2 p-3 rounded-lg border-2 cursor-pointer transition-all ${filters.amenities.includes(amenity.value)
+                                                    ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 shadow-sm'
+                                                    : 'border-gray-200 dark:border-gray-700 hover:border-primary-300 dark:hover:border-primary-600'
+                                                }`}
+                                        >
+                                            <input
+                                                type="checkbox"
+                                                checked={filters.amenities.includes(amenity.value)}
+                                                onChange={(e) => {
+                                                    const newAmenities = e.target.checked
+                                                        ? [...filters.amenities, amenity.value]
+                                                        : filters.amenities.filter(a => a !== amenity.value);
+                                                    setFilters({ ...filters, amenities: newAmenities });
+                                                }}
+                                                className="w-4 h-4 text-primary-600 rounded border-gray-300 focus:ring-primary-500"
+                                            />
+                                            <span className="text-2xl">{amenity.icon}</span>
+                                            <span className="text-sm text-gray-700 dark:text-gray-300 font-medium">
+                                                {amenity.label}
+                                            </span>
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Distance Filter */}
+                            {userLocation && (
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                        📍 Distance (within {filters.radius} km)
+                                    </label>
+                                    <input
+                                        type="range"
+                                        name="radius"
+                                        min="1"
+                                        max="50"
+                                        value={filters.radius}
+                                        onChange={handleFilterChange}
+                                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
+                                    />
+                                    <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                        <span>1 km</span>
+                                        <span className="font-bold text-primary-600 dark:text-primary-400">{filters.radius} km</span>
+                                        <span>50 km</span>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
 
                     <div className="flex gap-3 mt-6 flex-wrap">
                         <button onClick={handleSearch} className="btn-primary">

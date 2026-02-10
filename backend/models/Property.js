@@ -71,6 +71,34 @@ const propertySchema = new mongoose.Schema({
             message: 'Furnishing must be fully-furnished, semi-furnished, or unfurnished'
         }
     },
+    // Advanced Filter Fields
+    propertyType: {
+        type: String,
+        enum: {
+            values: ['apartment', 'house', 'condo', 'studio', 'villa', 'penthouse'],
+            message: 'Invalid property type'
+        },
+        default: 'apartment',
+        index: true
+    },
+    amenities: {
+        type: [String],
+        enum: {
+            values: ['wifi', 'parking', 'gym', 'pool', 'security', '247_water', 'power_backup', 'elevator', 'garden', 'playground', 'clubhouse', 'cctv'],
+            message: 'Invalid amenity'
+        },
+        default: []
+    },
+    petFriendly: {
+        type: Boolean,
+        default: false,
+        index: true
+    },
+    availableFrom: {
+        type: Date,
+        default: Date.now,
+        index: true
+    },
     // Property Lifecycle Status
     status: {
         type: String,

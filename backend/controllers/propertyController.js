@@ -405,6 +405,10 @@ const searchProperties = async (req, res) => {
             bedrooms,
             bathrooms,
             furnishing,
+            propertyType,      // NEW
+            amenities,         // NEW (comma-separated string)
+            petFriendly,       // NEW
+            availableFrom,     // NEW
             page = 1,
             limit = 20
         } = req.query;
@@ -451,6 +455,29 @@ const searchProperties = async (req, res) => {
         // Furnishing filter
         if (furnishing) {
             query.furnishing = furnishing;
+        }
+
+        // ADVANCED FILTERS
+
+        // Property Type filter
+        if (propertyType) {
+            query.propertyType = propertyType;
+        }
+
+        // Amenities filter (all selected amenities must be present)
+        if (amenities) {
+            const amenitiesArray = amenities.split(',').map(a => a.trim());
+            query.amenities = { $all: amenitiesArray };
+        }
+
+        // Pet-Friendly filter
+        if (petFriendly === 'true') {
+            query.petFriendly = true;
+        }
+
+        // Available From filter (properties available on or before the specified date)
+        if (availableFrom) {
+            query.availableFrom = { $lte: new Date(availableFrom) };
         }
 
         // Pagination
