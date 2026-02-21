@@ -23,7 +23,8 @@ const initGridFS = (mediaConn) => {
         // Initialize storage after connection is established
         if (!storage) {
             storage = new GridFsStorage({
-                db: Promise.resolve(conn.db),
+                url: process.env.MONGODB_MEDIA_URI,
+                options: { useNewUrlParser: true, useUnifiedTopology: true },
                 file: (req, file) => {
                     // Return a Promise for async file metadata generation
                     return new Promise((resolve, reject) => {
