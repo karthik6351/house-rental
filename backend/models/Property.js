@@ -157,6 +157,14 @@ const propertySchema = new mongoose.Schema({
             message: 'Cannot upload more than 10 images'
         }
     },
+    videoUrl: {
+        type: String,
+        trim: true
+    },
+    floorPlanUrl: {
+        type: String,
+        trim: true
+    },
     averageRating: {
         type: Number,
         default: 0,

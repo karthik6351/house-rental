@@ -5,6 +5,8 @@ import { AuthProvider } from '@/contexts/AuthContext';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { Toaster } from 'react-hot-toast';
 import LeafletSetup from '@/components/LeafletSetup';
+import Navbar from '@/components/Navbar';
+import Footer from '@/components/Footer';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -47,7 +49,13 @@ export default function RootLayout({
                 <ErrorBoundary>
                     <AuthProvider>
                         <LeafletSetup />
-                        {children}
+                        <div className="flex flex-col min-h-screen">
+                            <Navbar />
+                            <main className="flex-grow pt-16">
+                                {children}
+                            </main>
+                            <Footer />
+                        </div>
                         <Toaster
                             position="top-right"
                             toastOptions={{

@@ -144,6 +144,13 @@ const confirmDeal = async (req, res) => {
             { path: 'property', select: 'title address images' }
         ]);
 
+        // Emit real-time events
+        if (req.io) {
+            req.io.to(tenantId.toString()).emit('deal-updated', { type: 'deal_confirmed', receipt });
+            req.io.to(ownerId.toString()).emit('deal-updated', { type: 'deal_confirmed', receipt });
+            req.io.emit('property-status-changed', { id: property._id, status: 'rented' });
+        }
+
         res.status(201).json({
             success: true,
             message: 'Deal confirmed successfully',
@@ -311,6 +318,12 @@ const cancelDeal = async (req, res) => {
             relatedReceipt: receipt._id,
             category: 'deal'
         });
+
+        // Emit real-time events
+        if (req.io) {
+            req.io.to(receipt.tenant.toString()).emit('deal-updated', { type: 'deal_cancelled', receipt });
+            req.io.emit('property-status-changed', { id: receipt.property._id, status: 'available' });
+        }
 
         res.json({
             success: true,

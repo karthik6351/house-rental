@@ -80,8 +80,8 @@ export default function OwnerMessagesPage() {
     if (loading) {
         return (
             <ProtectedRoute allowedRoles={['owner']}>
-                <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                    <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+                <div className="min-h-screen bg-gray-50 dark:bg-[#0a0a0b] flex items-center justify-center">
+                    <Loader2 className="w-8 h-8 animate-spin text-primary-600 dark:text-primary-400" />
                 </div>
             </ProtectedRoute>
         );
@@ -89,24 +89,28 @@ export default function OwnerMessagesPage() {
 
     return (
         <ProtectedRoute allowedRoles={['owner']}>
-            <div className="min-h-screen bg-gray-50">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                    <div className="mb-8">
-                        <div className="flex items-center space-x-3">
-                            <MessageCircle className="w-8 h-8 text-blue-600" />
-                            <h1 className="text-3xl font-bold text-gray-900">Messages</h1>
+            <div className="min-h-screen bg-gray-50 dark:bg-[#0a0a0b] pb-20">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-10">
+                    <div className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div>
+                            <div className="flex items-center space-x-3 mb-2">
+                                <div className="bg-primary-100 dark:bg-primary-900/30 p-2.5 rounded-xl">
+                                    <MessageCircle className="w-7 h-7 text-primary-600 dark:text-primary-400" />
+                                </div>
+                                <h1 className="text-3xl font-bold text-gray-900 dark:text-white tracking-tight">Messages</h1>
+                            </div>
+                            <p className="text-gray-600 dark:text-gray-400">Manage your conversations with tenants.</p>
                         </div>
-                        <p className="text-gray-600 mt-2">Manage your conversations with tenants</p>
                     </div>
 
-                    <div className="bg-white rounded-lg shadow-lg overflow-hidden" style={{ height: 'calc(100vh - 240px)' }}>
-                        <div className="grid grid-cols-1 md:grid-cols-3 h-full">
-                            {/* Conversations List */}
-                            <div className="border-r border-gray-200 overflow-y-auto">
-                                <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
-                                    <h2 className="font-semibold text-gray-900">Conversations</h2>
-                                    <p className="text-xs text-gray-500">{conversations.length} active</p>
-                                </div>
+                    <div className="bg-white dark:bg-[#1C1C1F] rounded-3xl shadow-sm border border-gray-100 dark:border-gray-800/60 overflow-hidden flex flex-col md:flex-row h-[70vh] min-h-[500px] max-h-[800px]">
+                        {/* Conversations List Sidebar */}
+                        <div className={`w-full md:w-80 lg:w-96 border-r border-gray-100 dark:border-gray-800/60 flex flex-col ${selectedConversation ? 'hidden md:flex' : 'flex'}`}>
+                            <div className="bg-gray-50/50 dark:bg-[#121214]/50 px-6 py-5 border-b border-gray-100 dark:border-gray-800/60 flex items-center justify-between">
+                                <h2 className="font-bold text-lg text-gray-900 dark:text-white">Inbox</h2>
+                                <span className="text-xs font-semibold bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400 px-2.5 py-1 rounded-full">{conversations.length}</span>
+                            </div>
+                            <div className="overflow-y-auto flex-1 scrollbar-hide">
                                 <ConversationList
                                     conversations={conversations.map(conv => ({
                                         _id: conv._id,
@@ -122,24 +126,28 @@ export default function OwnerMessagesPage() {
                                     onSelectConversation={handleSelectConversation}
                                 />
                             </div>
+                        </div>
 
-                            {/* Chat Interface */}
-                            <div className="md:col-span-2">
-                                {selectedConversation ? (
-                                    <ChatInterface
-                                        propertyId={selectedConversation.propertyId}
-                                        otherUserId={selectedConversation.userId}
-                                        otherUserName={selectedConversation.userName}
-                                        propertyTitle={selectedConversation.propertyTitle}
-                                    />
-                                ) : (
-                                    <div className="flex flex-col items-center justify-center h-full text-gray-400">
-                                        <MessageCircle className="w-20 h-20 mb-4" />
-                                        <p className="text-lg font-medium">Select a conversation</p>
-                                        <p className="text-sm mt-2">Choose a conversation from the list to start messaging</p>
+                        {/* Chat Interface Area */}
+                        <div className={`flex-1 flex flex-col bg-gray-50/30 dark:bg-[#121214]/30 ${!selectedConversation ? 'hidden md:flex' : 'flex'}`}>
+                            {selectedConversation ? (
+                                <ChatInterface
+                                    propertyId={selectedConversation.propertyId}
+                                    otherUserId={selectedConversation.userId}
+                                    otherUserName={selectedConversation.userName}
+                                    propertyTitle={selectedConversation.propertyTitle}
+                                />
+                            ) : (
+                                <div className="flex flex-col items-center justify-center h-full text-center px-4">
+                                    <div className="w-24 h-24 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-6">
+                                        <MessageCircle className="w-12 h-12 text-gray-400 dark:text-gray-500" />
                                     </div>
-                                )}
-                            </div>
+                                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Your Messages</h3>
+                                    <p className="text-gray-500 dark:text-gray-400 max-w-sm">
+                                        Select a conversation from the sidebar to view details and reply.
+                                    </p>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>

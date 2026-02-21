@@ -64,7 +64,9 @@ const register = async (req, res) => {
                 name: user.name,
                 email: user.email,
                 phone: user.phone,
-                role: user.role
+                role: user.role,
+                avatar: user.avatar,
+                bio: user.bio
             }
         });
 
@@ -137,7 +139,9 @@ const login = async (req, res) => {
                 name: user.name,
                 email: user.email,
                 phone: user.phone,
-                role: user.role
+                role: user.role,
+                avatar: user.avatar,
+                bio: user.bio
             }
         });
 
@@ -209,9 +213,10 @@ const forgotPassword = async (req, res) => {
         const PasswordReset = require('../models/PasswordReset');
         const resetToken = await PasswordReset.createResetToken(user._id);
 
-        // Send email
-        const { sendPasswordResetEmail } = require('../utils/sendEmail');
-        await sendPasswordResetEmail(user.email, resetToken, user.name);
+        // MOCK EMAIL SEND (To save output to console instead of actual email)
+        // const { sendPasswordResetEmail } = require('../utils/sendEmail');
+        // await sendPasswordResetEmail(user.email, resetToken, user.name);
+        console.log(`[MOCK OTP] Password reset requested for ${user.email}. Reset Token: ${resetToken}`);
 
         res.status(200).json({
             success: true,
@@ -315,7 +320,9 @@ const resetPassword = async (req, res) => {
                 name: user.name,
                 email: user.email,
                 phone: user.phone,
-                role: user.role
+                role: user.role,
+                avatar: user.avatar,
+                bio: user.bio
             }
         });
 

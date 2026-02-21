@@ -104,6 +104,8 @@ const createProperty = async (req, res) => {
             bathrooms,
             area,
             furnishing,
+            videoUrl,
+            floorPlanUrl,
             lat: providedLat,
             lng: providedLng
         } = req.body;
@@ -164,6 +166,8 @@ const createProperty = async (req, res) => {
         if (bathrooms) propertyData.bathrooms = parseInt(bathrooms);
         if (area) propertyData.area = parseFloat(area);
         if (furnishing) propertyData.furnishing = furnishing;
+        if (videoUrl) propertyData.videoUrl = videoUrl;
+        if (floorPlanUrl) propertyData.floorPlanUrl = floorPlanUrl;
 
         const property = await Property.create(propertyData);
 
@@ -236,6 +240,8 @@ const updateProperty = async (req, res) => {
             bathrooms,
             area,
             furnishing,
+            videoUrl,
+            floorPlanUrl,
             available
         } = req.body;
 
@@ -265,6 +271,8 @@ const updateProperty = async (req, res) => {
         if (bathrooms) property.bathrooms = parseInt(bathrooms);
         if (area) property.area = parseFloat(area);
         if (furnishing) property.furnishing = furnishing;
+        if (typeof videoUrl !== 'undefined') property.videoUrl = videoUrl;
+        if (typeof floorPlanUrl !== 'undefined') property.floorPlanUrl = floorPlanUrl;
         if (typeof available !== 'undefined') property.available = available;
 
         // Update address and coordinates if address changed
@@ -284,6 +292,11 @@ const updateProperty = async (req, res) => {
 
         await property.save();
         await property.populate('owner', 'name email phone');
+
+        // Emit real-time event for property update
+        if (req.io) {
+            req.io.emit('property-updated', property);
+        }
 
         res.status(200).json({
             success: true,
@@ -374,6 +387,11 @@ const toggleAvailability = async (req, res) => {
 
         property.available = !property.available;
         await property.save();
+
+        // Emit real-time event
+        if (req.io) {
+            req.io.emit('property-availability-changed', { id: property._id, available: property.available });
+        }
 
         res.status(200).json({
             success: true,

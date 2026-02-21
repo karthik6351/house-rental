@@ -139,6 +139,12 @@ app.get('/uploads/properties/:filename', (req, res) => {
 });
 
 
+// Attach Socket.io to req object for use in controllers
+app.use((req, res, next) => {
+    req.io = io;
+    next();
+});
+
 // Routes
 const authRoutes = require('./routes/auth');
 const propertyRoutes = require('./routes/properties');

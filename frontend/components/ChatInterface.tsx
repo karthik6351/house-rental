@@ -137,26 +137,29 @@ export default function ChatInterface({ propertyId, otherUserId, otherUserName, 
     if (loading) {
         return (
             <div className="flex items-center justify-center h-full">
-                <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+                <Loader2 className="w-8 h-8 animate-spin text-primary-600 dark:text-primary-400" />
             </div>
         );
     }
 
     return (
-        <div className="flex flex-col h-full bg-white">
+        <div className="flex flex-col h-full bg-white dark:bg-[#1C1C1F]">
             {/* Header */}
-            <div className="bg-white border-b border-gray-200 px-6 py-4">
-                <div className="flex justify-between items-start">
+            <div className="bg-white/80 dark:bg-[#121214]/80 backdrop-blur-md border-b border-gray-100 dark:border-gray-800/60 px-6 py-4 z-10">
+                <div className="flex justify-between items-center">
                     <div>
-                        <h3 className="text-lg font-semibold text-gray-900">{propertyTitle}</h3>
-                        <p className="text-sm text-gray-500">{otherUserName}</p>
+                        <h3 className="text-lg font-bold text-gray-900 dark:text-white truncate max-w-[250px] sm:max-w-xs">{propertyTitle}</h3>
+                        <div className="flex items-center gap-2 mt-0.5">
+                            <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{otherUserName}</p>
+                        </div>
                     </div>
                     {isOwner && property && property.status !== 'rented' && property.status !== 'archived' && (
                         <button
                             onClick={() => setShowDealModal(true)}
-                            className="px-4 py-2   bg-green-600 text-white text-sm font-semibold rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2"
+                            className="px-4 py-2 sm:px-5 sm:py-2.5 bg-green-500/10 text-green-600 dark:text-green-400 text-sm font-bold rounded-xl hover:bg-green-500 hover:text-white transition-all flex items-center gap-2"
                         >
-                            🎉 Confirm Deal
+                            🎉 <span className="hidden sm:inline">Confirm Deal</span>
                         </button>
                     )}
                 </div>
@@ -174,13 +177,17 @@ export default function ChatInterface({ propertyId, otherUserId, otherUserName, 
             )}
 
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto px-6 py-4 bg-gray-50">
+            <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-6 bg-gray-50/50 dark:bg-[#121214]/50 scrollbar-hide">
                 {messages.length === 0 ? (
-                    <div className="flex items-center justify-center h-full text-gray-400">
-                        <p>No messages yet. Start the conversation!</p>
+                    <div className="flex flex-col items-center justify-center h-full text-gray-400 dark:text-gray-500">
+                        <div className="w-16 h-16 bg-white dark:bg-[#1C1C1F] rounded-full flex items-center justify-center shadow-sm mb-4">
+                            <span className="text-2xl">👋</span>
+                        </div>
+                        <p className="font-semibold text-gray-900 dark:text-white mb-1">Start the conversation</p>
+                        <p className="text-sm">Say hi to {otherUserName.split(' ')[0]}!</p>
                     </div>
                 ) : (
-                    <>
+                    <div className="space-y-4">
                         {messages.map((message) => (
                             <MessageBubble
                                 key={message._id}
@@ -190,33 +197,35 @@ export default function ChatInterface({ propertyId, otherUserId, otherUserName, 
                                 senderName={message.sender._id !== user?._id ? message.sender.name : undefined}
                             />
                         ))}
-                        <div ref={messagesEndRef} />
-                    </>
+                        <div ref={messagesEndRef} className="h-4" />
+                    </div>
                 )}
             </div>
 
             {/* Input */}
-            <form onSubmit={handleSendMessage} className="bg-white border-t border-gray-200 px-6 py-4">
-                <div className="flex items-center space-x-2">
-                    <input
-                        type="text"
-                        value={newMessage}
-                        onChange={(e) => setNewMessage(e.target.value)}
-                        placeholder="Type a message..."
-                        className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        disabled={sending}
-                    />
+            <form onSubmit={handleSendMessage} className="bg-white dark:bg-[#1C1C1F] border-t border-gray-100 dark:border-gray-800/60 p-4">
+                <div className="flex items-center gap-3">
+                    <div className="flex-1 relative">
+                        <input
+                            type="text"
+                            value={newMessage}
+                            onChange={(e) => setNewMessage(e.target.value)}
+                            placeholder="Type a message..."
+                            className="w-full pl-4 pr-12 py-3 bg-gray-100/80 dark:bg-[#121214] border-transparent rounded-2xl focus:bg-white dark:focus:bg-[#121214] focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 transition-all font-medium"
+                            disabled={sending}
+                        />
+                    </div>
                     <button
                         type="submit"
                         disabled={!newMessage.trim() || sending}
-                        className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
+                        className="bg-primary-600 text-white p-3 sm:px-6 sm:py-3 rounded-2xl hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center shadow-sm shadow-primary-500/25 active:scale-95"
                     >
                         {sending ? (
                             <Loader2 className="w-5 h-5 animate-spin" />
                         ) : (
                             <>
-                                <Send className="w-5 h-5" />
-                                <span>Send</span>
+                                <Send className="w-5 h-5 -ml-1 sm:ml-0" />
+                                <span className="hidden sm:inline font-bold ml-2">Send</span>
                             </>
                         )}
                     </button>

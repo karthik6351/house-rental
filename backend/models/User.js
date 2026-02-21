@@ -36,6 +36,14 @@ const userSchema = new mongoose.Schema({
         },
         required: [true, 'Role is required']
     },
+    avatar: {
+        type: String,
+        default: 'https://ui-avatars.com/api/?name=User&background=random'
+    },
+    bio: {
+        type: String,
+        maxlength: [500, 'Bio cannot exceed 500 characters']
+    },
     // Account suspension fields
     suspended: {
         type: Boolean,

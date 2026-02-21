@@ -1,28 +1,29 @@
-'use client';
-
 import { useState, useEffect } from 'react';
 import { leadService } from '@/lib/services';
 import { Lead, LeadLabel, LeadStage, OwnerAnalytics } from '@/types/industry';
 import toast from 'react-hot-toast';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Users, Flame, Thermometer, CheckCircle, Percent, Plus, X, Search, MapPin, Mail, Phone, Calendar, MessageSquare, Clock } from 'lucide-react';
+import ProtectedRoute from '@/components/ProtectedRoute';
 
 // Label configuration
-const LABEL_CONFIG: Record<LeadLabel, { emoji: string; color: string; bg: string }> = {
-    hot: { emoji: '🔥', color: '#dc2626', bg: '#fee2e2' },
-    warm: { emoji: '🌡️', color: '#d97706', bg: '#fef3c7' },
-    cold: { emoji: '❄️', color: '#2563eb', bg: '#dbeafe' },
-    lost: { emoji: '💔', color: '#6b7280', bg: '#f3f4f6' },
-    converted: { emoji: '🎉', color: '#059669', bg: '#d1fae5' }
+const LABEL_CONFIG: Record<LeadLabel, { emoji: string; colorClass: string; bgClass: string; }> = {
+    hot: { emoji: '🔥', colorClass: 'text-red-700 dark:text-red-400', bgClass: 'bg-red-100 dark:bg-red-500/20' },
+    warm: { emoji: '🌡️', colorClass: 'text-amber-700 dark:text-amber-400', bgClass: 'bg-amber-100 dark:bg-amber-500/20' },
+    cold: { emoji: '❄️', colorClass: 'text-blue-700 dark:text-blue-400', bgClass: 'bg-blue-100 dark:bg-blue-500/20' },
+    lost: { emoji: '💔', colorClass: 'text-gray-700 dark:text-gray-400', bgClass: 'bg-gray-200 dark:bg-gray-700' },
+    converted: { emoji: '🎉', colorClass: 'text-emerald-700 dark:text-emerald-400', bgClass: 'bg-emerald-100 dark:bg-emerald-500/20' }
 };
 
 // Stage configuration
-const STAGE_CONFIG: Record<LeadStage, { label: string; order: number }> = {
-    enquiry: { label: 'Enquiry', order: 1 },
-    viewing_scheduled: { label: 'Viewing Scheduled', order: 2 },
-    viewing_done: { label: 'Viewing Done', order: 3 },
-    negotiating: { label: 'Negotiating', order: 4 },
-    approved: { label: 'Approved', order: 5 },
-    confirmed: { label: 'Confirmed', order: 6 },
-    rejected: { label: 'Rejected', order: 7 }
+const STAGE_CONFIG: Record<LeadStage, { label: string; order: number; icon: any }> = {
+    enquiry: { label: 'Enquiry', order: 1, icon: MessageSquare },
+    viewing_scheduled: { label: 'Viewing Scheduled', order: 2, icon: Calendar },
+    viewing_done: { label: 'Viewing Done', order: 3, icon: CheckCircle },
+    negotiating: { label: 'Negotiating', order: 4, icon: Clock },
+    approved: { label: 'Approved', order: 5, icon: CheckCircle },
+    confirmed: { label: 'Confirmed', order: 6, icon: CheckCircle },
+    rejected: { label: 'Rejected', order: 7, icon: X }
 };
 
 export default function LeadsPage() {
@@ -58,7 +59,12 @@ export default function LeadsPage() {
         try {
             await leadService.updateLead(leadId, { label });
             toast.success('Label updated');
-            fetchData();
+
+            // Optimistic update
+            setLeads(prev => prev.map(l => l._id === leadId ? { ...l, label } : l));
+            if (selectedLead && selectedLead._id === leadId) {
+                setSelectedLead({ ...selectedLead, label });
+            }
         } catch (error) {
             toast.error('Failed to update label');
         }
@@ -79,453 +85,284 @@ export default function LeadsPage() {
     const LeadCard = ({ lead }: { lead: Lead }) => {
         const labelConfig = LABEL_CONFIG[lead.label];
         const stageConfig = STAGE_CONFIG[lead.stage];
+        const StageIcon = stageConfig.icon;
 
         return (
-            <div
-                className="lead-card"
+            <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
                 onClick={() => setSelectedLead(lead)}
+                className="bg-white dark:bg-[#1C1C1F] rounded-2xl p-5 border border-gray-100 dark:border-gray-800/60 shadow-sm hover:shadow-xl transition-all duration-300 cursor-pointer group"
             >
-                <div className="lead-header">
-                    <div className="lead-tenant">
-                        <span className="tenant-name">{lead.tenant.name}</span>
-                        <span className="tenant-email">{lead.tenant.email}</span>
+                <div className="flex justify-between items-start mb-4">
+                    <div>
+                        <h3 className="font-bold text-gray-900 dark:text-white text-lg group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
+                            {lead.tenant.name}
+                        </h3>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-0.5">
+                            <Mail className="w-3.5 h-3.5" />
+                            <span className="truncate max-w-[150px]">{lead.tenant.email}</span>
+                        </p>
                     </div>
-                    <span
-                        className="label-badge"
-                        style={{ background: labelConfig.bg, color: labelConfig.color }}
-                    >
+                    <span className={`px-2.5 py-1 rounded-lg text-xs font-bold uppercase tracking-wider ${labelConfig.bgClass} ${labelConfig.colorClass} flex items-center gap-1`}>
                         {labelConfig.emoji} {lead.label}
                     </span>
                 </div>
 
-                <div className="lead-property">
-                    <span className="property-title">🏠 {lead.property.title}</span>
-                    <span className="property-price">₹{lead.property.price.toLocaleString()}/mo</span>
+                <div className="bg-gray-50 dark:bg-[#121214] rounded-xl p-3 mb-4 border border-gray-100 dark:border-gray-800/80">
+                    <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm truncate flex items-center gap-1.5 mb-1">
+                        <MapPin className="w-4 h-4 text-gray-400" />
+                        {lead.property.title}
+                    </p>
+                    <p className="text-primary-600 dark:text-primary-400 font-bold ml-5.5 text-sm">
+                        ₹{lead.property.price.toLocaleString()}<span className="text-xs text-gray-500 font-normal">/mo</span>
+                    </p>
                 </div>
 
-                <div className="lead-meta">
-                    <span className="stage-badge">📍 {stageConfig.label}</span>
-                    <span className="messages">💬 {lead.totalMessages} messages</span>
+                <div className="flex flex-wrap items-center gap-3 text-xs font-medium text-gray-600 dark:text-gray-400">
+                    <span className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-md">
+                        <StageIcon className="w-3.5 h-3.5" />
+                        {stageConfig.label}
+                    </span>
+                    <span className="flex items-center gap-1">
+                        <MessageSquare className="w-3.5 h-3.5" />
+                        {lead.totalMessages} msgs
+                    </span>
                     {lead.daysSinceContact !== undefined && (
-                        <span className="last-contact">
+                        <span className="flex items-center gap-1 ml-auto">
+                            <Clock className="w-3.5 h-3.5" />
                             {lead.daysSinceContact === 0 ? 'Today' : `${lead.daysSinceContact}d ago`}
                         </span>
                     )}
                 </div>
-            </div>
+            </motion.div>
         );
     };
 
     return (
-        <div className="leads-page">
-            <header className="leads-header">
-                <h1>Lead Management (CRM)</h1>
-                <p>Track and manage your property enquiries</p>
-            </header>
-
-            {/* Analytics Cards */}
-            {analytics && (
-                <div className="analytics-grid">
-                    <div className="stat-card">
-                        <span className="stat-value">{analytics.leads.total}</span>
-                        <span className="stat-label">Total Leads</span>
-                    </div>
-                    <div className="stat-card hot">
-                        <span className="stat-value">{analytics.leads.hot}</span>
-                        <span className="stat-label">🔥 Hot</span>
-                    </div>
-                    <div className="stat-card warm">
-                        <span className="stat-value">{analytics.leads.warm}</span>
-                        <span className="stat-label">🌡️ Warm</span>
-                    </div>
-                    <div className="stat-card converted">
-                        <span className="stat-value">{analytics.leads.converted}</span>
-                        <span className="stat-label">🎉 Converted</span>
-                    </div>
-                    <div className="stat-card rate">
-                        <span className="stat-value">{analytics.leads.conversionRate}</span>
-                        <span className="stat-label">Conversion Rate</span>
+        <ProtectedRoute requiredRole="owner">
+            <div className="min-h-screen bg-gray-50 dark:bg-[#0a0a0b] pb-20">
+                {/* Header */}
+                <div className="bg-white/80 dark:bg-[#121214]/80 backdrop-blur-md sticky top-[72px] z-20 border-b border-gray-200 dark:border-gray-800">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 lg:py-6">
+                        <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                            <Users className="w-6 h-6 text-primary-600 dark:text-primary-400" />
+                            Lead Management
+                        </h1>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Track and manage your property enquiries.</p>
                     </div>
                 </div>
-            )}
 
-            {/* Filters */}
-            <div className="filters">
-                <button
-                    className={activeFilter === 'all' ? 'active' : ''}
-                    onClick={() => setActiveFilter('all')}
-                >
-                    All
-                </button>
-                {Object.entries(LABEL_CONFIG).map(([label, config]) => (
-                    <button
-                        key={label}
-                        className={activeFilter === label ? 'active' : ''}
-                        onClick={() => setActiveFilter(label)}
-                    >
-                        {config.emoji} {label}
-                    </button>
-                ))}
-            </div>
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                    {/* Analytics Cards */}
+                    {analytics && (
+                        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+                            <div className="bg-white dark:bg-[#1C1C1F] p-4 rounded-2xl border border-gray-100 dark:border-gray-800/60 shadow-sm">
+                                <span className="block text-2xl font-extrabold text-gray-900 dark:text-white mb-1">{analytics.leads.total}</span>
+                                <span className="text-xs font-medium text-gray-500 uppercase tracking-wider flex items-center gap-1">
+                                    <Users className="w-3.5 h-3.5" /> Total Leads
+                                </span>
+                            </div>
+                            <div className="bg-gradient-to-br from-red-50 to-white dark:from-red-900/10 dark:to-[#1C1C1F] p-4 rounded-2xl border border-red-100 dark:border-red-900/30 shadow-sm relative overflow-hidden">
+                                <span className="block text-2xl font-extrabold text-red-600 dark:text-red-400 mb-1 relative z-10">{analytics.leads.hot}</span>
+                                <span className="text-xs font-medium text-red-600/70 dark:text-red-400/70 uppercase tracking-wider flex items-center gap-1 relative z-10">
+                                    <Flame className="w-3.5 h-3.5" /> Hot
+                                </span>
+                                <Flame className="w-16 h-16 text-red-100 dark:text-red-900/20 absolute -right-2 -bottom-2" />
+                            </div>
+                            <div className="bg-gradient-to-br from-amber-50 to-white dark:from-amber-900/10 dark:to-[#1C1C1F] p-4 rounded-2xl border border-amber-100 dark:border-amber-900/30 shadow-sm relative overflow-hidden">
+                                <span className="block text-2xl font-extrabold text-amber-600 dark:text-amber-400 mb-1 relative z-10">{analytics.leads.warm}</span>
+                                <span className="text-xs font-medium text-amber-600/70 dark:text-amber-400/70 uppercase tracking-wider flex items-center gap-1 relative z-10">
+                                    <Thermometer className="w-3.5 h-3.5" /> Warm
+                                </span>
+                            </div>
+                            <div className="bg-gradient-to-br from-emerald-50 to-white dark:from-emerald-900/10 dark:to-[#1C1C1F] p-4 rounded-2xl border border-emerald-100 dark:border-emerald-900/30 shadow-sm relative overflow-hidden">
+                                <span className="block text-2xl font-extrabold text-emerald-600 dark:text-emerald-400 mb-1 relative z-10">{analytics.leads.converted}</span>
+                                <span className="text-xs font-medium text-emerald-600/70 dark:text-emerald-400/70 uppercase tracking-wider flex items-center gap-1 relative z-10">
+                                    <CheckCircle className="w-3.5 h-3.5" /> Converted
+                                </span>
+                            </div>
+                            <div className="col-span-2 md:col-span-1 bg-gradient-to-br from-primary-50 to-white dark:from-primary-900/10 dark:to-[#1C1C1F] p-4 rounded-2xl border border-primary-100 dark:border-primary-900/30 shadow-sm relative overflow-hidden">
+                                <span className="block text-2xl font-extrabold text-primary-600 dark:text-primary-400 mb-1 relative z-10">{analytics.leads.conversionRate}</span>
+                                <span className="text-xs font-medium text-primary-600/70 dark:text-primary-400/70 uppercase tracking-wider flex items-center gap-1 relative z-10">
+                                    <Percent className="w-3.5 h-3.5" /> Convert Rate
+                                </span>
+                            </div>
+                        </div>
+                    )}
 
-            {/* Leads Grid */}
-            <div className="leads-grid">
-                {loading ? (
-                    <div className="loading">Loading leads...</div>
-                ) : leads.length === 0 ? (
-                    <div className="empty-state">
-                        <span>📭</span>
-                        <p>No leads yet. When tenants enquire about your properties, they'll appear here.</p>
+                    {/* Filters */}
+                    <div className="flex gap-2 overflow-x-auto pb-4 scrollbar-hide mb-6">
+                        <button
+                            className={`flex-shrink-0 px-4 py-2 rounded-xl text-sm font-semibold transition-all ${activeFilter === 'all'
+                                    ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900 shadow-md'
+                                    : 'bg-white dark:bg-[#1C1C1F] text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800'
+                                }`}
+                            onClick={() => setActiveFilter('all')}
+                        >
+                            All Leads
+                        </button>
+                        {Object.entries(LABEL_CONFIG).map(([label, config]) => (
+                            <button
+                                key={label}
+                                className={`flex-shrink-0 px-4 py-2 rounded-xl text-sm font-semibold transition-all capitalize flex items-center gap-2 ${activeFilter === label
+                                        ? `${config.bgClass} ${config.colorClass} ring-1 ring-inset ring-current shadow-sm`
+                                        : 'bg-white dark:bg-[#1C1C1F] text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800'
+                                    }`}
+                                onClick={() => setActiveFilter(label)}
+                            >
+                                {config.emoji} {label}
+                            </button>
+                        ))}
                     </div>
-                ) : (
-                    leads.map(lead => <LeadCard key={lead._id} lead={lead} />)
-                )}
-            </div>
 
-            {/* Lead Detail Modal */}
-            {selectedLead && (
-                <div className="modal-overlay" onClick={() => setSelectedLead(null)}>
-                    <div className="lead-detail" onClick={e => e.stopPropagation()}>
-                        <div className="detail-header">
-                            <h2>{selectedLead.tenant.name}</h2>
-                            <button onClick={() => setSelectedLead(null)}>×</button>
+                    {/* Leads Grid */}
+                    {loading ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {[1, 2, 3].map(i => (
+                                <div key={i} className="bg-white dark:bg-[#1C1C1F] rounded-2xl h-48 border border-gray-100 dark:border-gray-800/60 animate-pulse"></div>
+                            ))}
                         </div>
-
-                        <div className="detail-section">
-                            <h3>Contact</h3>
-                            <p>📧 {selectedLead.tenant.email}</p>
-                            {selectedLead.tenant.phone && <p>📞 {selectedLead.tenant.phone}</p>}
+                    ) : leads.length === 0 ? (
+                        <div className="bg-white dark:bg-[#1C1C1F] rounded-3xl py-20 text-center border border-dashed border-gray-300 dark:border-gray-800">
+                            <div className="w-20 h-20 bg-gray-50 dark:bg-[#121214] rounded-full flex items-center justify-center mx-auto mb-4">
+                                <Users className="w-10 h-10 text-gray-400" />
+                            </div>
+                            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">No leads found</h3>
+                            <p className="text-gray-500 max-w-sm mx-auto">
+                                {activeFilter === 'all'
+                                    ? "When tenants enquire about your properties, they'll appear here."
+                                    : `You don't have any leads marked as ${activeFilter} right now.`}
+                            </p>
                         </div>
-
-                        <div className="detail-section">
-                            <h3>Property Interest</h3>
-                            <p>🏠 {selectedLead.property.title}</p>
-                            <p>📍 {selectedLead.property.address}</p>
-                        </div>
-
-                        <div className="detail-section">
-                            <h3>Label</h3>
-                            <div className="label-buttons">
-                                {(Object.keys(LABEL_CONFIG) as LeadLabel[]).map(label => (
-                                    <button
-                                        key={label}
-                                        className={selectedLead.label === label ? 'active' : ''}
-                                        style={{
-                                            background: selectedLead.label === label ? LABEL_CONFIG[label].bg : 'white',
-                                            color: LABEL_CONFIG[label].color,
-                                            borderColor: LABEL_CONFIG[label].color
-                                        }}
-                                        onClick={() => handleUpdateLabel(selectedLead._id, label)}
-                                    >
-                                        {LABEL_CONFIG[label].emoji} {label}
-                                    </button>
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <AnimatePresence>
+                                {leads.map(lead => (
+                                    <LeadCard key={lead._id} lead={lead} />
                                 ))}
-                            </div>
+                            </AnimatePresence>
                         </div>
-
-                        <div className="detail-section">
-                            <h3>Notes</h3>
-                            <div className="notes-list">
-                                {selectedLead.notes.length === 0 ? (
-                                    <p className="no-notes">No notes yet</p>
-                                ) : (
-                                    selectedLead.notes.map(note => (
-                                        <div key={note._id} className="note">
-                                            <p>{note.text}</p>
-                                            <span>{new Date(note.createdAt).toLocaleDateString()}</span>
-                                        </div>
-                                    ))
-                                )}
-                            </div>
-                            <div className="add-note">
-                                <input
-                                    type="text"
-                                    value={noteText}
-                                    onChange={e => setNoteText(e.target.value)}
-                                    placeholder="Add a note..."
-                                />
-                                <button onClick={handleAddNote}>Add</button>
-                            </div>
-                        </div>
-                    </div>
+                    )}
                 </div>
-            )}
 
-            <style jsx>{`
-                .leads-page {
-                    max-width: 1200px;
-                    margin: 0 auto;
-                    padding: 2rem;
-                }
+                {/* Lead Detail Modal */}
+                <AnimatePresence>
+                    {selectedLead && (
+                        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-0">
+                            <motion.div
+                                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                                className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+                                onClick={() => setSelectedLead(null)}
+                            />
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                                className="bg-white dark:bg-[#1C1C1F] w-full max-w-xl rounded-3xl shadow-2xl relative z-10 overflow-hidden max-h-[90vh] flex flex-col"
+                            >
+                                <div className="p-6 border-b border-gray-100 dark:border-gray-800/60 flex justify-between items-center bg-gray-50/50 dark:bg-[#121214]/50">
+                                    <div>
+                                        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{selectedLead.tenant.name}</h2>
+                                        <p className="text-gray-500 dark:text-gray-400 text-sm flex items-center gap-2 mt-1">
+                                            <Mail className="w-4 h-4" /> {selectedLead.tenant.email}
+                                        </p>
+                                    </div>
+                                    <button
+                                        onClick={() => setSelectedLead(null)}
+                                        className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors bg-gray-100 dark:bg-gray-900"
+                                    >
+                                        <X className="w-5 h-5 text-gray-500" />
+                                    </button>
+                                </div>
 
-                .leads-header {
-                    margin-bottom: 2rem;
-                }
+                                <div className="p-6 overflow-y-auto flex-1 space-y-8">
+                                    {/* Property Area */}
+                                    <div>
+                                        <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-3">Property of Interest</h3>
+                                        <div className="bg-primary-50 dark:bg-primary-900/10 border border-primary-100 dark:border-primary-900/30 rounded-2xl p-4 flex justify-between items-center">
+                                            <div>
+                                                <p className="font-bold text-primary-900 dark:text-primary-100 mb-1 flex items-center gap-2">
+                                                    <MapPin className="w-4 h-4 text-primary-500" />
+                                                    {selectedLead.property.title}
+                                                </p>
+                                                <p className="text-primary-600/80 dark:text-primary-400/80 text-sm ml-6">{selectedLead.property.address}</p>
+                                            </div>
+                                            <p className="font-extrabold text-primary-600 text-lg">
+                                                ₹{selectedLead.property.price.toLocaleString()}
+                                            </p>
+                                        </div>
+                                    </div>
 
-                .leads-header h1 {
-                    margin: 0;
-                    font-size: 1.75rem;
-                    color: #1f2937;
-                }
+                                    {/* Labels Area */}
+                                    <div>
+                                        <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-3">Lead Status (Label)</h3>
+                                        <div className="flex flex-wrap gap-2">
+                                            {(Object.keys(LABEL_CONFIG) as LeadLabel[]).map(label => {
+                                                const config = LABEL_CONFIG[label];
+                                                const isActive = selectedLead.label === label;
+                                                return (
+                                                    <button
+                                                        key={label}
+                                                        onClick={() => handleUpdateLabel(selectedLead._id, label)}
+                                                        className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all capitalize flex items-center gap-2 ${isActive
+                                                                ? `${config.bgClass} ${config.colorClass} ring-2 ring-current`
+                                                                : 'bg-gray-50 dark:bg-[#121214] text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-800 hover:bg-gray-100 dark:hover:bg-gray-800'
+                                                            }`}
+                                                    >
+                                                        {config.emoji} {label}
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
 
-                .leads-header p {
-                    margin: 0.25rem 0 0;
-                    color: #6b7280;
-                }
+                                    {/* Notes Area */}
+                                    <div>
+                                        <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-3">Notes</h3>
 
-                .analytics-grid {
-                    display: grid;
-                    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-                    gap: 1rem;
-                    margin-bottom: 2rem;
-                }
+                                        <div className="space-y-3 mb-4 max-h-48 overflow-y-auto pr-2 scrollbar-thin">
+                                            {selectedLead.notes.length === 0 ? (
+                                                <div className="bg-gray-50 dark:bg-[#121214] rounded-xl p-4 text-center border border-dashed border-gray-300 dark:border-gray-800">
+                                                    <p className="text-sm text-gray-500 italic">No notes added yet.</p>
+                                                </div>
+                                            ) : (
+                                                selectedLead.notes.map(note => (
+                                                    <div key={note._id} className="bg-gray-50 dark:bg-[#121214] border border-gray-100 dark:border-gray-800/80 rounded-xl p-3">
+                                                        <p className="text-sm text-gray-800 dark:text-gray-200 mb-2">{note.text}</p>
+                                                        <span className="text-xs text-gray-400 flex items-center gap-1">
+                                                            <Calendar className="w-3 h-3" />
+                                                            {new Date(note.createdAt).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}
+                                                        </span>
+                                                    </div>
+                                                ))
+                                            )}
+                                        </div>
 
-                .stat-card {
-                    padding: 1.25rem;
-                    background: white;
-                    border-radius: 12px;
-                    text-align: center;
-                    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-                }
-
-                .stat-value {
-                    display: block;
-                    font-size: 1.75rem;
-                    font-weight: 700;
-                    color: #1f2937;
-                }
-
-                .stat-label {
-                    font-size: 0.75rem;
-                    color: #6b7280;
-                }
-
-                .stat-card.hot { border-top: 3px solid #dc2626; }
-                .stat-card.warm { border-top: 3px solid #d97706; }
-                .stat-card.converted { border-top: 3px solid #059669; }
-                .stat-card.rate { border-top: 3px solid #6366f1; }
-
-                .filters {
-                    display: flex;
-                    gap: 0.5rem;
-                    flex-wrap: wrap;
-                    margin-bottom: 1.5rem;
-                }
-
-                .filters button {
-                    padding: 0.5rem 1rem;
-                    font-size: 0.875rem;
-                    background: white;
-                    border: 1px solid #e5e7eb;
-                    border-radius: 20px;
-                    cursor: pointer;
-                    text-transform: capitalize;
-                }
-
-                .filters button:hover {
-                    background: #f9fafb;
-                }
-
-                .filters button.active {
-                    background: #6366f1;
-                    color: white;
-                    border-color: #6366f1;
-                }
-
-                .leads-grid {
-                    display: grid;
-                    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-                    gap: 1rem;
-                }
-
-                .lead-card {
-                    padding: 1rem;
-                    background: white;
-                    border-radius: 12px;
-                    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-                    cursor: pointer;
-                    transition: transform 0.2s, box-shadow 0.2s;
-                }
-
-                .lead-card:hover {
-                    transform: translateY(-2px);
-                    box-shadow: 0 8px 20px rgba(0,0,0,0.1);
-                }
-
-                .lead-header {
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: flex-start;
-                    margin-bottom: 0.75rem;
-                }
-
-                .tenant-name {
-                    display: block;
-                    font-weight: 600;
-                    color: #1f2937;
-                }
-
-                .tenant-email {
-                    font-size: 0.75rem;
-                    color: #6b7280;
-                }
-
-                .label-badge {
-                    padding: 0.25rem 0.5rem;
-                    font-size: 0.7rem;
-                    font-weight: 500;
-                    border-radius: 6px;
-                    text-transform: uppercase;
-                }
-
-                .lead-property {
-                    display: flex;
-                    justify-content: space-between;
-                    margin-bottom: 0.75rem;
-                    padding: 0.5rem;
-                    background: #f9fafb;
-                    border-radius: 8px;
-                    font-size: 0.875rem;
-                }
-
-                .lead-meta {
-                    display: flex;
-                    gap: 0.75rem;
-                    font-size: 0.75rem;
-                    color: #6b7280;
-                }
-
-                .loading, .empty-state {
-                    grid-column: 1 / -1;
-                    padding: 3rem;
-                    text-align: center;
-                    color: #6b7280;
-                }
-
-                .empty-state span {
-                    font-size: 3rem;
-                }
-
-                .modal-overlay {
-                    position: fixed;
-                    inset: 0;
-                    background: rgba(0,0,0,0.5);
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    z-index: 1000;
-                    padding: 1rem;
-                }
-
-                .lead-detail {
-                    background: white;
-                    border-radius: 16px;
-                    width: 100%;
-                    max-width: 500px;
-                    max-height: 90vh;
-                    overflow-y: auto;
-                }
-
-                .detail-header {
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    padding: 1.25rem;
-                    border-bottom: 1px solid #e5e7eb;
-                }
-
-                .detail-header h2 {
-                    margin: 0;
-                }
-
-                .detail-header button {
-                    width: 32px;
-                    height: 32px;
-                    font-size: 1.5rem;
-                    background: transparent;
-                    border: none;
-                    cursor: pointer;
-                }
-
-                .detail-section {
-                    padding: 1rem 1.25rem;
-                    border-bottom: 1px solid #e5e7eb;
-                }
-
-                .detail-section h3 {
-                    margin: 0 0 0.75rem;
-                    font-size: 0.875rem;
-                    color: #6b7280;
-                }
-
-                .detail-section p {
-                    margin: 0.25rem 0;
-                }
-
-                .label-buttons {
-                    display: flex;
-                    flex-wrap: wrap;
-                    gap: 0.5rem;
-                }
-
-                .label-buttons button {
-                    padding: 0.375rem 0.75rem;
-                    font-size: 0.8rem;
-                    border: 1px solid;
-                    border-radius: 6px;
-                    cursor: pointer;
-                    text-transform: capitalize;
-                }
-
-                .notes-list {
-                    max-height: 200px;
-                    overflow-y: auto;
-                    margin-bottom: 0.75rem;
-                }
-
-                .note {
-                    padding: 0.5rem;
-                    margin-bottom: 0.5rem;
-                    background: #f9fafb;
-                    border-radius: 8px;
-                }
-
-                .note p {
-                    margin: 0 0 0.25rem;
-                    font-size: 0.875rem;
-                }
-
-                .note span {
-                    font-size: 0.7rem;
-                    color: #9ca3af;
-                }
-
-                .no-notes {
-                    color: #9ca3af;
-                    font-style: italic;
-                }
-
-                .add-note {
-                    display: flex;
-                    gap: 0.5rem;
-                }
-
-                .add-note input {
-                    flex: 1;
-                    padding: 0.5rem;
-                    border: 1px solid #e5e7eb;
-                    border-radius: 6px;
-                }
-
-                .add-note button {
-                    padding: 0.5rem 1rem;
-                    background: #6366f1;
-                    color: white;
-                    border: none;
-                    border-radius: 6px;
-                    cursor: pointer;
-                }
-            `}</style>
-        </div>
+                                        <div className="flex gap-2 relative">
+                                            <input
+                                                type="text"
+                                                value={noteText}
+                                                onChange={e => setNoteText(e.target.value)}
+                                                placeholder="Type a new note..."
+                                                onKeyDown={e => e.key === 'Enter' && handleAddNote()}
+                                                className="flex-1 bg-gray-50 dark:bg-[#121214] border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white text-sm rounded-xl focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 block w-full p-3"
+                                            />
+                                            <button
+                                                onClick={handleAddNote}
+                                                disabled={!noteText.trim()}
+                                                className="bg-primary-600 text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-1 shadow-sm shadow-primary-500/20"
+                                            >
+                                                <Plus className="w-4 h-4" /> Add
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </motion.div>
+                        </div>
+                    )}
+                </AnimatePresence>
+            </div>
+        </ProtectedRoute>
     );
 }
