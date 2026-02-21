@@ -91,7 +91,7 @@ body {
 
 /* Base button and interaction styles */
 .btn-primary {
-  @apply bg-primary-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-primary-700 active:scale-95 shadow-[0_8px_16px_rgba(84, 107, 250, 0.2)] hover:shadow-[0_12px_24px_rgba(84, 107, 250, 0.3)] hover:-translate-y-0.5;
+  @apply bg-primary-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-primary-700 active:scale-95 shadow-[0_8px_16px_rgba(84,107,250,0.2)] hover:shadow-[0_12px_24px_rgba(84,107,250,0.3)] hover:-translate-y-0.5;
 }
 
 .btn-secondary {
