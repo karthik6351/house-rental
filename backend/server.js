@@ -38,12 +38,7 @@ connectDB().then(() => {
     initGridFS();
 });
 
-// Security Middleware - Helmet for security headers
-app.use(helmet({
-    contentSecurityPolicy: false, // Disable CSP for now to avoid breaking maps/images
-    crossOriginEmbedderPolicy: false,
-    crossOriginResourcePolicy: { policy: "cross-origin" }, // Allow images to be loaded
-}));
+
 
 // HTTP request logging
 if (process.env.NODE_ENV === 'development') {
@@ -54,7 +49,7 @@ if (process.env.NODE_ENV === 'development') {
     }));
 }
 
-// CORS Configuration - MUST come before rate limiting
+// CORS Configuration - MUST come before helmet and rate limiting
 const allowedOrigins = [
     'http://localhost:3000',
     'https://easyrent1.vercel.app'
@@ -67,7 +62,7 @@ if (process.env.FRONTEND_URL) {
 
 logger.info('🔒 CORS Allowed Origins: ' + allowedOrigins.join(', '));
 
-app.use(cors({
+const corsOptions = {
     origin: function (origin, callback) {
         // Allow requests with no origin (like mobile apps, Postman, or curl requests)
         if (!origin) {
@@ -96,10 +91,20 @@ app.use(cors({
     maxAge: 86400, // 24 hours
     preflightContinue: false,
     optionsSuccessStatus: 204
-}));
+};
 
 // Handle preflight requests explicitly for all routes
-app.options('*', cors());
+app.options('*', cors(corsOptions));
+
+// Apply CORS middleware
+app.use(cors(corsOptions));
+
+// Security Middleware - Helmet for security headers (AFTER CORS)
+app.use(helmet({
+    contentSecurityPolicy: false, // Disable CSP for now to avoid breaking maps/images
+    crossOriginEmbedderPolicy: false,
+    crossOriginResourcePolicy: { policy: "cross-origin" }, // Allow images to be loaded
+}));
 
 // Rate limiting - Apply AFTER CORS
 app.use('/api/', apiLimiter);
