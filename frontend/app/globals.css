@@ -39,7 +39,8 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.4);
 }
 
-.dark .glass, .glass-dark {
+.dark .glass,
+.glass-dark {
   background: rgba(18, 18, 20, 0.4);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
@@ -90,11 +91,11 @@ body {
 
 /* Base button and interaction styles */
 .btn-primary {
-  @apply bg-primary-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-primary-700 active:scale-95 shadow-[0_8px_16px_rgba(84,107,250,0.2)] hover:shadow-[0_12px_24px_rgba(84,107,250,0.3)] hover:-translate-y-0.5;
+  @apply bg-primary-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-primary-700 active:scale-95 shadow-[0_8px_16px_rgba(84, 107, 250, 0.2)] hover:shadow-[0_12px_24px_rgba(84, 107, 250, 0.3)] hover:-translate-y-0.5;
 }
 
 .btn-secondary {
-  @apply bg-background-surfaceLight dark:bg-background-surfaceDark text-foreground-rgb px-6 py-3 rounded-xl font-semibold border border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700 active:scale-95 shadow-sm hover:shadow-md hover:-translate-y-0.5;
+  @apply bg-background-surfaceLight dark:bg-background-surfaceDark px-6 py-3 rounded-xl font-semibold border border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700 active:scale-95 shadow-sm hover:shadow-md hover:-translate-y-0.5;
 }
 
 .card {
