@@ -38,7 +38,29 @@ connectDB().then(() => {
     initGridFS();
 });
 
-
+// Manual CORS headers - FIRST middleware, failsafe to ensure CORS headers are always present
+app.use((req, res, next) => {
+    const origin = req.headers.origin;
+    const allowed = [
+        'http://localhost:3000',
+        'https://easyrent1.vercel.app'
+    ];
+    if (process.env.FRONTEND_URL) {
+        allowed.push(process.env.FRONTEND_URL);
+    }
+    if (origin && allowed.includes(origin)) {
+        res.setHeader('Access-Control-Allow-Origin', origin);
+        res.setHeader('Access-Control-Allow-Credentials', 'true');
+        res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,PATCH,OPTIONS,HEAD');
+        res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization,X-Requested-With,Accept,Origin,Access-Control-Request-Method,Access-Control-Request-Headers');
+        res.setHeader('Access-Control-Expose-Headers', 'Content-Range,X-Content-Range');
+        res.setHeader('Access-Control-Max-Age', '86400');
+    }
+    if (req.method === 'OPTIONS') {
+        return res.status(204).end();
+    }
+    next();
+});
 
 // HTTP request logging
 if (process.env.NODE_ENV === 'development') {
