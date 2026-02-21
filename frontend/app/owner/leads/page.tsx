@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, useEffect } from 'react';
 import { leadService } from '@/lib/services';
 import { Lead, LeadLabel, LeadStage, OwnerAnalytics } from '@/types/industry';
@@ -195,8 +197,8 @@ export default function LeadsPage() {
                     <div className="flex gap-2 overflow-x-auto pb-4 scrollbar-hide mb-6">
                         <button
                             className={`flex-shrink-0 px-4 py-2 rounded-xl text-sm font-semibold transition-all ${activeFilter === 'all'
-                                    ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900 shadow-md'
-                                    : 'bg-white dark:bg-[#1C1C1F] text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800'
+                                ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900 shadow-md'
+                                : 'bg-white dark:bg-[#1C1C1F] text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800'
                                 }`}
                             onClick={() => setActiveFilter('all')}
                         >
@@ -206,8 +208,8 @@ export default function LeadsPage() {
                             <button
                                 key={label}
                                 className={`flex-shrink-0 px-4 py-2 rounded-xl text-sm font-semibold transition-all capitalize flex items-center gap-2 ${activeFilter === label
-                                        ? `${config.bgClass} ${config.colorClass} ring-1 ring-inset ring-current shadow-sm`
-                                        : 'bg-white dark:bg-[#1C1C1F] text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800'
+                                    ? `${config.bgClass} ${config.colorClass} ring-1 ring-inset ring-current shadow-sm`
+                                    : 'bg-white dark:bg-[#1C1C1F] text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800'
                                     }`}
                                 onClick={() => setActiveFilter(label)}
                             >
@@ -306,8 +308,8 @@ export default function LeadsPage() {
                                                         key={label}
                                                         onClick={() => handleUpdateLabel(selectedLead._id, label)}
                                                         className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all capitalize flex items-center gap-2 ${isActive
-                                                                ? `${config.bgClass} ${config.colorClass} ring-2 ring-current`
-                                                                : 'bg-gray-50 dark:bg-[#121214] text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-800 hover:bg-gray-100 dark:hover:bg-gray-800'
+                                                            ? `${config.bgClass} ${config.colorClass} ring-2 ring-current`
+                                                            : 'bg-gray-50 dark:bg-[#121214] text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-800 hover:bg-gray-100 dark:hover:bg-gray-800'
                                                             }`}
                                                     >
                                                         {config.emoji} {label}
