@@ -7,9 +7,10 @@ const Grid = require('gridfs-stream');
 // GridFS setup
 let gfs, gridfsBucket, storage, upload;
 
-// Initialize GridFS after MongoDB connection
-const initGridFS = () => {
-    const conn = mongoose.connection;
+// Initialize GridFS with the media database connection
+const initGridFS = (mediaConn) => {
+    // Use media connection if provided, otherwise fall back to default mongoose connection
+    const conn = mediaConn || mongoose.connection;
 
     if (conn.readyState === 1) {
         gridfsBucket = new mongoose.mongo.GridFSBucket(conn.db, {
@@ -65,7 +66,7 @@ const initGridFS = () => {
 
         console.log('✅ GridFS initialized successfully');
     } else {
-        console.error('❌ MongoDB not connected, GridFS initialization failed');
+        console.error('❌ MongoDB Media not connected, GridFS initialization failed');
     }
 };
 

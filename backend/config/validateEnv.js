@@ -4,6 +4,7 @@ const logger = require('../config/logger');
 const validateEnv = () => {
     const required = [
         'MONGODB_URI',
+        'MONGODB_MEDIA_URI',
         'JWT_SECRET',
         'PORT'
     ];
@@ -20,9 +21,14 @@ const validateEnv = () => {
         logger.warn('⚠️  JWT_SECRET is too short! Recommended length: 32+ characters');
     }
 
-    // Validate MongoDB URI format
+    // Validate MongoDB URI formats
     if (!process.env.MONGODB_URI.startsWith('mongodb')) {
         logger.error('❌ Invalid MONGODB_URI format');
+        process.exit(1);
+    }
+
+    if (!process.env.MONGODB_MEDIA_URI.startsWith('mongodb')) {
+        logger.error('❌ Invalid MONGODB_MEDIA_URI format');
         process.exit(1);
     }
 

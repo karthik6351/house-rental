@@ -13,6 +13,7 @@ const helmet = require('helmet');
 const mongoSanitize = require('express-mongo-sanitize');
 const morgan = require('morgan');
 const connectDB = require('./config/database');
+const { connectMediaDB } = require('./config/mediaDatabase');
 const { initGridFS } = require('./middleware/uploadGridFS');
 const logger = require('./config/logger');
 const { apiLimiter } = require('./config/rateLimiter');
@@ -33,10 +34,13 @@ const io = socketIO(server, {
     }
 });
 
-// Connect to database
-connectDB().then(() => {
-    initGridFS();
-});
+// Connect to databases
+const initDatabases = async () => {
+    await connectDB();
+    const mediaConn = await connectMediaDB();
+    initGridFS(mediaConn);
+};
+initDatabases();
 
 // Manual CORS headers - FIRST middleware, failsafe to ensure CORS headers are always present
 app.use((req, res, next) => {
