@@ -5,16 +5,7 @@ import { Bell, Check, CheckCheck, Trash2, X, MessageCircle, Handshake, Star, Ale
 import { useAuth } from '@/contexts/AuthContext';
 import { notificationService } from '@/lib/services';
 import { AnimatePresence, motion } from 'framer-motion';
-
-interface Notification {
-    _id: string;
-    type: string;
-    title: string;
-    message: string;
-    read: boolean;
-    createdAt: string;
-    data?: any;
-}
+import { Notification } from '@/types/industry';
 
 export default function NotificationBell({ className }: { className?: string }) {
     const { user } = useAuth();
@@ -49,7 +40,7 @@ export default function NotificationBell({ className }: { className?: string }) 
         setIsLoading(true);
         try {
             const res = await notificationService.getNotifications({ limit: 20 });
-            setNotifications(res.data.notifications);
+            setNotifications(res.data);
         } catch (e) { console.error(e); }
         finally { setIsLoading(false); }
     };
@@ -171,10 +162,10 @@ export default function NotificationBell({ className }: { className?: string }) 
                                                 </div>
                                                 <div className="flex-1 min-w-0">
                                                     <p className={`text-xs leading-snug ${!notification.read ? 'font-semibold text-gray-900 dark:text-white' : 'text-gray-700 dark:text-gray-300'}`}>
-                                                        {notification.title || notification.message}
+                                                        {notification.title || notification.body}
                                                     </p>
-                                                    {notification.title && notification.message !== notification.title && (
-                                                        <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-0.5 line-clamp-2">{notification.message}</p>
+                                                    {notification.title && notification.body && notification.body !== notification.title && (
+                                                        <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-0.5 line-clamp-2">{notification.body}</p>
                                                     )}
                                                     <span className="text-[10px] text-gray-400 mt-1 block">{getTimeAgo(notification.createdAt)}</span>
                                                 </div>
