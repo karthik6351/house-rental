@@ -23,7 +23,7 @@ const initGridFS = (mediaConn) => {
         // Initialize storage after connection is established
         if (!storage) {
             storage = new GridFsStorage({
-                db: conn.db,
+                db: Promise.resolve(conn.db),
                 file: (req, file) => {
                     // Return a Promise for async file metadata generation
                     return new Promise((resolve, reject) => {
