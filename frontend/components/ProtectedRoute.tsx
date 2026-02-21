@@ -20,7 +20,7 @@ export default function ProtectedRoute({ children, requiredRole }: ProtectedRout
         if (!isLoading && !user) {
             router.push('/login');
         }
-        if (!isLoading && user && requiredRole && user.role !== requiredRole && user.role !== 'admin') {
+        if (!isLoading && user && requiredRole && user.role !== requiredRole && (user.role as string) !== 'admin') {
             router.push('/');
         }
     }, [user, isLoading, requiredRole, router]);
@@ -50,7 +50,7 @@ export default function ProtectedRoute({ children, requiredRole }: ProtectedRout
         );
     }
 
-    if (requiredRole && user.role !== requiredRole && user.role !== 'admin') {
+    if (requiredRole && user.role !== requiredRole && (user.role as string) !== 'admin') {
         return null;
     }
 

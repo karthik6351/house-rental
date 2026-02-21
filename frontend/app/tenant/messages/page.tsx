@@ -1,170 +1,122 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { MessageCircle, Loader2 } from 'lucide-react';
+import { MessageCircle } from 'lucide-react';
 import ConversationList from '@/components/ConversationList';
 import ChatInterface from '@/components/ChatInterface';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import { useAuth } from '@/contexts/AuthContext';
 import api from '@/lib/api';
 import toast from 'react-hot-toast';
 
 interface Conversation {
     _id: string;
-    property: {
-        _id: string;
-        title: string;
-        images: string[];
-        owner: {
-            _id: string;
-            name: string;
-            email: string;
-        };
-    };
-    lastMessage: string;
-    lastMessageTime: string;
-    unreadCount: number;
+    participants: { _id: string; name: string; email: string }[];
+    property?: { _id: string; title: string };
+    lastMessage?: { content: string; createdAt: string; sender: string };
+    unreadCount?: number;
 }
 
 export default function TenantMessagesPage() {
+    const { user } = useAuth();
     const [conversations, setConversations] = useState<Conversation[]>([]);
     const [loading, setLoading] = useState(true);
-    const [selectedConversation, setSelectedConversation] = useState<{
-        propertyId: string;
-        userId: string;
-        userName: string;
-        propertyTitle: string;
-    } | null>(null);
+    const [activeConvId, setActiveConvId] = useState<string | null>(null);
+    const [otherParticipant, setOtherParticipant] = useState<{ _id: string; name: string; email: string } | null>(null);
 
     useEffect(() => {
         fetchConversations();
 
-        // Check for URL parameters (from Contact Owner button)
         const params = new URLSearchParams(window.location.search);
         const propertyId = params.get('propertyId');
         const ownerId = params.get('ownerId');
-
         if (propertyId && ownerId) {
-            // Auto-select this conversation once conversations are loaded
-            // We'll handle this in a separate useEffect after conversations load
             sessionStorage.setItem('pendingChat', JSON.stringify({ propertyId, ownerId }));
         }
     }, []);
 
-    const fetchConversations = async () => {
-        try {
-            setLoading(true);
-            const response = await api.get('/chat/conversations');
-            setConversations(response.data.conversations);
-        } catch (error: any) {
-            console.error('Failed to fetch conversations:', error);
-            toast.error('Failed to load conversations');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleSelectConversation = (propertyId: string, userId: string) => {
-        const conversation = conversations.find((conv) => conv.property._id === propertyId);
-        if (conversation) {
-            setSelectedConversation({
-                propertyId: conversation.property._id,
-                userId: conversation.property.owner._id,
-                userName: conversation.property.owner.name,
-                propertyTitle: conversation.property.title
-            });
-        }
-    };
-
-    // Auto-select conversation from URL parameters after conversations load
     useEffect(() => {
         if (conversations.length > 0) {
             const pendingChat = sessionStorage.getItem('pendingChat');
             if (pendingChat) {
                 try {
                     const { propertyId, ownerId } = JSON.parse(pendingChat);
-                    handleSelectConversation(propertyId, ownerId);
+                    const conv = conversations.find(c => {
+                        const prop = (c as any).property;
+                        return prop && prop._id === propertyId;
+                    });
+                    if (conv) {
+                        handleSelectConversation(conv);
+                    }
                     sessionStorage.removeItem('pendingChat');
-
-                    // Clear URL parameters
                     window.history.replaceState({}, '', '/tenant/messages');
-                } catch (error) {
-                    console.error('Failed to parse pending chat:', error);
-                }
+                } catch (e) { console.error(e); }
             }
         }
     }, [conversations]);
 
-    if (loading) {
-        return (
-            <ProtectedRoute allowedRoles={['tenant']}>
-                <div className="min-h-screen bg-gray-50 dark:bg-[#0a0a0b] flex items-center justify-center">
-                    <Loader2 className="w-8 h-8 animate-spin text-primary-600 dark:text-primary-400" />
-                </div>
-            </ProtectedRoute>
-        );
-    }
+    const fetchConversations = async () => {
+        try {
+            setLoading(true);
+            const response = await api.get('/chat/conversations');
+            const raw = response.data.conversations || [];
+            const mapped: Conversation[] = raw.map((conv: any) => ({
+                _id: conv._id || `${conv.property?._id}-${conv.property?.owner?._id || ''}`,
+                participants: [
+                    { _id: user?._id || '', name: user?.name || '', email: user?.email || '' },
+                    conv.property?.owner || { _id: '', name: 'Owner', email: '' },
+                ],
+                property: conv.property ? { _id: conv.property._id, title: conv.property.title } : undefined,
+                lastMessage: conv.lastMessage ? { content: conv.lastMessage, createdAt: conv.lastMessageTime, sender: '' } : undefined,
+                unreadCount: conv.unreadCount || 0,
+            }));
+            setConversations(mapped);
+        } catch (error: any) {
+            console.error('Failed to fetch conversations:', error);
+            toast.error('Failed to load conversations');
+        } finally { setLoading(false); }
+    };
+
+    const handleSelectConversation = (conversation: Conversation) => {
+        setActiveConvId(conversation._id);
+        const other = conversation.participants.find(p => p._id !== user?._id) || conversation.participants[0];
+        setOtherParticipant(other);
+    };
 
     return (
-        <ProtectedRoute allowedRoles={['tenant']}>
-            <div className="min-h-screen bg-gray-50 dark:bg-[#0a0a0b] pb-20">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-10">
-                    <div className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                        <div>
-                            <div className="flex items-center space-x-3 mb-2">
-                                <div className="bg-primary-100 dark:bg-primary-900/30 p-2.5 rounded-xl">
-                                    <MessageCircle className="w-7 h-7 text-primary-600 dark:text-primary-400" />
-                                </div>
-                                <h1 className="text-3xl font-bold text-gray-900 dark:text-white tracking-tight">Messages</h1>
-                            </div>
-                            <p className="text-gray-600 dark:text-gray-400">Manage your conversations with property owners.</p>
-                        </div>
+        <ProtectedRoute requiredRole="tenant">
+            <div className="min-h-screen bg-background-light dark:bg-background-dark pb-24 md:pb-10">
+                <div className="bg-white dark:bg-[#131316] border-b border-gray-100 dark:border-gray-800/50 sticky top-16 z-30">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
+                        <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2.5">
+                            <MessageCircle size={22} className="text-primary-500" /> Messages
+                        </h1>
+                        <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-0.5">Chat with property owners</p>
                     </div>
+                </div>
 
-                    <div className="bg-white dark:bg-[#1C1C1F] rounded-3xl shadow-sm border border-gray-100 dark:border-gray-800/60 overflow-hidden flex flex-col md:flex-row h-[70vh] min-h-[500px] max-h-[800px]">
-                        {/* Conversations List Sidebar */}
-                        <div className={`w-full md:w-80 lg:w-96 border-r border-gray-100 dark:border-gray-800/60 flex flex-col ${selectedConversation ? 'hidden md:flex' : 'flex'}`}>
-                            <div className="bg-gray-50/50 dark:bg-[#121214]/50 px-6 py-5 border-b border-gray-100 dark:border-gray-800/60 flex items-center justify-between">
-                                <h2 className="font-bold text-lg text-gray-900 dark:text-white">Inbox</h2>
-                                <span className="text-xs font-semibold bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400 px-2.5 py-1 rounded-full">{conversations.length}</span>
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
+                    <div className="card p-0 overflow-hidden flex flex-col md:flex-row h-[70vh] min-h-[500px] max-h-[800px] hover:translate-y-0 hover:shadow-sm">
+                        <div className={`w-full md:w-80 lg:w-96 border-r border-gray-100 dark:border-gray-800/50 flex flex-col ${activeConvId ? 'hidden md:flex' : 'flex'}`}>
+                            <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800/50 flex items-center justify-between">
+                                <h2 className="font-bold text-sm text-gray-900 dark:text-white">Inbox</h2>
+                                <span className="badge badge-info text-[10px]">{conversations.length}</span>
                             </div>
-                            <div className="overflow-y-auto flex-1 scrollbar-hide">
-                                <ConversationList
-                                    conversations={conversations.map(conv => ({
-                                        _id: conv._id,
-                                        property: conv.property,
-                                        otherUser: conv.property.owner,
-                                        lastMessage: conv.lastMessage ? {
-                                            content: conv.lastMessage,
-                                            createdAt: conv.lastMessageTime
-                                        } : undefined,
-                                        unreadCount: conv.unreadCount
-                                    }))}
-                                    selectedPropertyId={selectedConversation?.propertyId || null}
-                                    onSelectConversation={handleSelectConversation}
-                                />
-                            </div>
+                            <ConversationList
+                                conversations={conversations}
+                                activeConversation={activeConvId}
+                                currentUserId={user?._id || ''}
+                                onSelectConversation={handleSelectConversation}
+                                isLoading={loading}
+                            />
                         </div>
 
-                        {/* Chat Interface Area */}
-                        <div className={`flex-1 flex flex-col bg-gray-50/30 dark:bg-[#121214]/30 ${!selectedConversation ? 'hidden md:flex' : 'flex'}`}>
-                            {selectedConversation ? (
-                                <ChatInterface
-                                    propertyId={selectedConversation.propertyId}
-                                    otherUserId={selectedConversation.userId}
-                                    otherUserName={selectedConversation.userName}
-                                    propertyTitle={selectedConversation.propertyTitle}
-                                />
-                            ) : (
-                                <div className="flex flex-col items-center justify-center h-full text-center px-4">
-                                    <div className="w-24 h-24 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-6">
-                                        <MessageCircle className="w-12 h-12 text-gray-400 dark:text-gray-500" />
-                                    </div>
-                                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Your Messages</h3>
-                                    <p className="text-gray-500 dark:text-gray-400 max-w-sm">
-                                        Select a conversation from the sidebar to view details and reply.
-                                    </p>
-                                </div>
-                            )}
+                        <div className={`flex-1 flex flex-col ${!activeConvId ? 'hidden md:flex' : 'flex'}`}>
+                            <ChatInterface
+                                conversationId={activeConvId}
+                                onBack={() => setActiveConvId(null)}
+                                otherParticipant={otherParticipant}
+                            />
                         </div>
                     </div>
                 </div>
