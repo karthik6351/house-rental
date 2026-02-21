@@ -11,6 +11,13 @@ export const getImageUrl = (fileId: string | undefined | null): string => {
         return fileId;
     }
 
+    // Handle legacy local uploads
+    if (fileId.startsWith('/uploads/')) {
+        let tempBase = process.env.NEXT_PUBLIC_SOCKET_URL || process.env.NEXT_PUBLIC_API_URL || 'https://house-rental-p61v.onrender.com';
+        tempBase = tempBase.replace(/\/api\/?$/, '').replace(/\/$/, '');
+        return `${tempBase}${fileId}`;
+    }
+
     // Get the base backend URL
     // Priority: NEXT_PUBLIC_SOCKET_URL -> Extract from NEXT_PUBLIC_API_URL -> Hardcoded fallback
     let baseUrl = process.env.NEXT_PUBLIC_SOCKET_URL;
