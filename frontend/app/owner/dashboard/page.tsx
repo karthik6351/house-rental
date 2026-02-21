@@ -9,277 +9,187 @@ import { getImageUrl } from '@/lib/urlUtils';
 import NotificationBell from '@/components/NotificationBell';
 import { PropertyStatusBadge } from '@/components/PropertyStatusManager';
 import { PropertyStatus } from '@/types/industry';
+import { motion } from 'framer-motion';
+import { Plus, Home, Eye, TrendingUp, Edit3, EyeOff, Trash2, MessageCircle, Users, MoreVertical, Building2 } from 'lucide-react';
 
 interface Property {
-    _id: string;
-    title: string;
-    price: number;
-    bedrooms: number;
-    bathrooms: number;
-    address: string;
-    images: string[];
-    available: boolean;
-    status: PropertyStatus;
-    createdAt: string;
-    views: number;
+    _id: string; title: string; price: number; bedrooms: number; bathrooms: number;
+    address: string; images: string[]; available: boolean; status: PropertyStatus;
+    createdAt: string; views: number;
 }
-
 
 function DashboardContent() {
     const router = useRouter();
-    const { user, logout } = useAuth();
+    const { user } = useAuth();
     const [properties, setProperties] = useState<Property[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
-    useEffect(() => {
-        fetchProperties();
-    }, []);
+    useEffect(() => { fetchProperties(); }, []);
 
     const fetchProperties = async () => {
         try {
             const response = await propertyAPI.getMyProperties();
             setProperties(response.data.properties);
-        } catch (error) {
-            console.error('Failed to fetch properties:', error);
-        } finally {
-            setIsLoading(false);
-        }
+        } catch (error) { console.error('Failed to fetch properties:', error); }
+        finally { setIsLoading(false); }
     };
 
     const handleDelete = async (id: string) => {
         if (!confirm('Are you sure you want to delete this property?')) return;
-
-        try {
-            await propertyAPI.delete(id);
-            setProperties(properties.filter(p => p._id !== id));
-        } catch (error) {
-            alert('Failed to delete property');
-        }
+        try { await propertyAPI.delete(id); setProperties(properties.filter(p => p._id !== id)); }
+        catch (error) { alert('Failed to delete property'); }
     };
 
     const toggleAvailability = async (id: string) => {
         try {
             const property = properties.find(p => p._id === id);
             if (!property) return;
-
             await propertyAPI.toggleAvailability(id, !property.available);
-            setProperties(properties.map(p =>
-                p._id === id ? { ...p, available: !p.available } : p
-            ));
-        } catch (error) {
-            alert('Failed to update availability');
-        }
+            setProperties(properties.map(p => p._id === id ? { ...p, available: !p.available } : p));
+        } catch (error) { alert('Failed to update availability'); }
     };
 
+    const totalViews = properties.reduce((t, p) => t + (p.views || 0), 0);
+    const activeCount = properties.filter(p => p.available).length;
+
     return (
-        <div className="min-h-screen bg-gray-50 dark:bg-[#0a0a0b] pb-20">
-            {/* Dashboard Sub-header */}
-            <div className="bg-white dark:bg-[#121214] border-b border-gray-200 dark:border-gray-800 sticky top-[72px] z-30">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 lg:py-6">
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="min-h-screen bg-background-light dark:bg-background-dark pb-24 md:pb-10">
+            {/* Header */}
+            <div className="bg-white dark:bg-[#131316] border-b border-gray-100 dark:border-gray-800/50 sticky top-16 z-30">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 lg:py-5">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                         <div>
-                            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Owner Dashboard</h1>
-                            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Manage your properties, leads, and messages.</p>
+                            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
+                            <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-0.5">Welcome back, {user?.name?.split(' ')[0]} 👋</p>
                         </div>
-                        <div className="flex items-center gap-3 overflow-x-auto pb-2 md:pb-0 scrollbar-hide">
-                            <NotificationBell className="text-gray-700 dark:text-gray-300 mr-2" />
-                            <button
-                                onClick={() => router.push('/owner/leads')}
-                                className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-[#1C1C1F] border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-sm font-medium whitespace-nowrap"
-                            >
-                                <svg className="w-4 h-4 text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                                </svg>
-                                Leads
+                        <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 scrollbar-hide">
+                            <NotificationBell className="text-gray-600 dark:text-gray-300" />
+                            <button onClick={() => router.push('/owner/leads')} className="btn-ghost text-xs border border-gray-200 dark:border-gray-800 rounded-xl flex items-center gap-1.5 whitespace-nowrap">
+                                <Users size={14} /> Leads
                             </button>
-                            <button
-                                onClick={() => router.push('/owner/messages')}
-                                className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-[#1C1C1F] border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-sm font-medium whitespace-nowrap"
-                            >
-                                <svg className="w-4 h-4 text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-                                </svg>
-                                Messages
+                            <button onClick={() => router.push('/owner/messages')} className="btn-ghost text-xs border border-gray-200 dark:border-gray-800 rounded-xl flex items-center gap-1.5 whitespace-nowrap">
+                                <MessageCircle size={14} /> Messages
                             </button>
-                            <button
-                                onClick={() => router.push('/owner/properties/new')}
-                                className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors text-sm font-medium whitespace-nowrap shadow-md shadow-primary-500/20"
-                            >
-                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                                </svg>
-                                Add Property
+                            <button onClick={() => router.push('/owner/properties/new')} className="btn-primary text-xs py-2 px-4 flex items-center gap-1.5 whitespace-nowrap">
+                                <Plus size={14} /> Add Property
                             </button>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                {/* Stats */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-                    <div className="bg-white dark:bg-[#1C1C1F] rounded-2xl p-6 border border-gray-100 dark:border-gray-800/60 shadow-sm relative overflow-hidden group">
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-primary-500/10 rounded-full blur-3xl -mr-16 -mt-16 transition-all group-hover:bg-primary-500/20"></div>
-                        <div className="flex justify-between items-start relative z-10">
-                            <div>
-                                <p className="text-gray-500 dark:text-gray-400 text-sm font-medium mb-1">Total Properties</p>
-                                <h3 className="text-4xl font-extrabold text-gray-900 dark:text-white">{properties.length}</h3>
+            <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
+                {/* Stats Grid */}
+                <div className="grid grid-cols-3 gap-3 sm:gap-5 mb-8">
+                    {[
+                        { label: 'Total Properties', value: properties.length, icon: Building2, color: 'primary', gradient: 'from-primary-500/10 to-primary-600/5' },
+                        { label: 'Active Listings', value: activeCount, icon: TrendingUp, color: 'emerald', gradient: 'from-emerald-500/10 to-emerald-600/5' },
+                        { label: 'Total Views', value: totalViews, icon: Eye, color: 'amber', gradient: 'from-amber-500/10 to-amber-600/5' },
+                    ].map((stat, i) => (
+                        <motion.div
+                            key={stat.label}
+                            initial={{ opacity: 0, y: 16 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: i * 0.1 }}
+                            className="card p-4 sm:p-5 lg:p-6 relative overflow-hidden"
+                        >
+                            <div className={`absolute top-0 right-0 w-24 h-24 bg-gradient-to-br ${stat.gradient} rounded-full blur-2xl -mr-8 -mt-8`} />
+                            <div className="relative z-10">
+                                <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-${stat.color}-50 dark:bg-${stat.color}-900/20 flex items-center justify-center mb-3`}>
+                                    <stat.icon size={18} className={`text-${stat.color}-600 dark:text-${stat.color}-400`} />
+                                </div>
+                                <h3 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-gray-900 dark:text-white">{stat.value}</h3>
+                                <p className="text-[10px] sm:text-xs text-gray-400 font-medium mt-0.5">{stat.label}</p>
                             </div>
-                            <div className="p-3 bg-primary-50 dark:bg-primary-900/30 rounded-xl">
-                                <svg className="w-6 h-6 text-primary-600 dark:text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                                </svg>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="bg-white dark:bg-[#1C1C1F] rounded-2xl p-6 border border-gray-100 dark:border-gray-800/60 shadow-sm relative overflow-hidden group">
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-green-500/10 rounded-full blur-3xl -mr-16 -mt-16 transition-all group-hover:bg-green-500/20"></div>
-                        <div className="flex justify-between items-start relative z-10">
-                            <div>
-                                <p className="text-gray-500 dark:text-gray-400 text-sm font-medium mb-1">Active Listings</p>
-                                <h3 className="text-4xl font-extrabold text-gray-900 dark:text-white">{properties.filter(p => p.available).length}</h3>
-                            </div>
-                            <div className="p-3 bg-green-50 dark:bg-green-900/30 rounded-xl">
-                                <svg className="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="bg-white dark:bg-[#1C1C1F] rounded-2xl p-6 border border-gray-100 dark:border-gray-800/60 shadow-sm relative overflow-hidden group">
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/10 rounded-full blur-3xl -mr-16 -mt-16 transition-all group-hover:bg-orange-500/20"></div>
-                        <div className="flex justify-between items-start relative z-10">
-                            <div>
-                                <p className="text-gray-500 dark:text-gray-400 text-sm font-medium mb-1">Total Views</p>
-                                <h3 className="text-4xl font-extrabold text-gray-900 dark:text-white">
-                                    {properties.reduce((total, p) => total + (p.views || 0), 0)}
-                                </h3>
-                            </div>
-                            <div className="p-3 bg-orange-50 dark:bg-orange-900/30 rounded-xl">
-                                <svg className="w-6 h-6 text-orange-600 dark:text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                </svg>
-                            </div>
-                        </div>
-                    </div>
+                        </motion.div>
+                    ))}
                 </div>
 
-                {/* Section Title */}
-                <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-xl font-bold text-gray-900 dark:text-white">My Properties</h2>
+                {/* Properties Section */}
+                <div className="flex items-center justify-between mb-5">
+                    <h2 className="text-lg font-bold text-gray-900 dark:text-white">My Properties</h2>
                 </div>
 
-                {/* Properties List */}
                 {isLoading ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {[1, 2, 3].map((i) => (
-                            <div key={i} className="animate-pulse bg-white dark:bg-[#1C1C1F] rounded-2xl h-80 border border-gray-100 dark:border-gray-800/60">
-                                <div className="h-44 bg-gray-200 dark:bg-gray-800 rounded-t-2xl"></div>
-                                <div className="p-5 space-y-4">
-                                    <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-3/4"></div>
-                                    <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-1/2"></div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                        {[1, 2, 3].map(i => (
+                            <div key={i} className="card p-0">
+                                <div className="skeleton h-44 rounded-t-3xl rounded-b-none" />
+                                <div className="p-5 space-y-3">
+                                    <div className="skeleton h-5 w-3/4" />
+                                    <div className="skeleton h-4 w-1/2" />
                                 </div>
                             </div>
                         ))}
                     </div>
                 ) : properties.length === 0 ? (
-                    <div className="bg-white dark:bg-[#1C1C1F] rounded-3xl border border-dashed border-gray-300 dark:border-gray-700 py-16 px-6 text-center">
-                        <div className="mx-auto w-16 h-16 bg-primary-50 dark:bg-primary-900/20 rounded-full flex items-center justify-center mb-4">
-                            <svg className="w-8 h-8 text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                            </svg>
+                    <div className="card text-center py-16 px-6 border-2 border-dashed border-gray-200 dark:border-gray-800 shadow-none hover:shadow-none hover:translate-y-0">
+                        <div className="w-16 h-16 bg-primary-50 dark:bg-primary-900/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                            <Home className="w-7 h-7 text-primary-500" />
                         </div>
-                        <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">No properties here</h3>
-                        <p className="text-gray-500 dark:text-gray-400 mb-6 max-w-sm mx-auto">It looks like you haven't listed any properties yet. Add one to start earning!</p>
-                        <button
-                            onClick={() => router.push('/owner/properties/new')}
-                            className="bg-primary-600 hover:bg-primary-700 text-white px-6 py-2.5 rounded-xl font-medium shadow-sm transition-colors"
-                        >
-                            List Your First Property
+                        <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">No properties yet</h3>
+                        <p className="text-gray-500 dark:text-gray-400 text-sm mb-6 max-w-sm mx-auto">List your first property and start receiving leads from verified tenants.</p>
+                        <button onClick={() => router.push('/owner/properties/new')} className="btn-primary text-sm">
+                            <Plus size={16} className="inline mr-1.5" /> List Property
                         </button>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {properties.map((property) => (
-                            <div key={property._id} className="bg-white dark:bg-[#1C1C1F] rounded-2xl overflow-hidden border border-gray-100 dark:border-gray-800/60 shadow-sm hover:shadow-xl transition-all duration-300 group flex flex-col">
-                                <div className="relative h-48 bg-gray-100 dark:bg-gray-800 overflow-hidden cursor-pointer" onClick={() => router.push(`/property/${property._id}`)}>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                        {properties.map((property, i) => (
+                            <motion.div
+                                key={property._id}
+                                initial={{ opacity: 0, y: 16 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: i * 0.05 }}
+                                className="card p-0 group flex flex-col"
+                            >
+                                {/* Image */}
+                                <div className="relative h-44 bg-gray-100 dark:bg-gray-800 overflow-hidden cursor-pointer rounded-t-3xl" onClick={() => router.push(`/property/${property._id}`)}>
                                     {property.images[0] ? (
-                                        <img
-                                            src={getImageUrl(property.images[0])}
-                                            alt={property.title}
-                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                                        />
+                                        <img src={getImageUrl(property.images[0])} alt={property.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                                     ) : (
-                                        <div className="w-full h-full flex items-center justify-center">
-                                            <svg className="w-12 h-12 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L28 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                            </svg>
-                                        </div>
+                                        <div className="w-full h-full flex items-center justify-center"><Home className="w-10 h-10 text-gray-300 dark:text-gray-700" /></div>
                                     )}
-                                    <div className="absolute top-3 right-3 flex flex-col gap-2 items-end">
+                                    <div className="absolute top-3 right-3 flex flex-col gap-1.5 items-end">
                                         <PropertyStatusBadge status={property.status || 'available'} />
-                                        <span className={`px-2.5 py-1 text-xs font-bold rounded-md backdrop-blur-md shadow-sm border ${property.available ? 'bg-green-500/90 text-white border-green-400/20' : 'bg-gray-800/90 text-gray-300 border-gray-700'}`}>
-                                            {property.available ? 'Available' : 'Hidden'}
+                                        <span className={`badge text-[10px] ${property.available ? 'badge-success' : 'badge-neutral'}`}>
+                                            {property.available ? 'Active' : 'Hidden'}
                                         </span>
                                     </div>
-                                    <div className="absolute bottom-3 right-3">
-                                        <span className="flex items-center gap-1.5 px-2 py-1 bg-black/60 backdrop-blur-md text-white text-xs font-medium rounded-md shadow-sm">
-                                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                            </svg>
-                                            {property.views || 0}
-                                        </span>
+                                    <div className="absolute bottom-3 right-3 badge badge-neutral backdrop-blur-md border-0 bg-black/50 text-white">
+                                        <Eye size={12} /> {property.views || 0}
                                     </div>
                                 </div>
 
-                                <div className="p-5 flex-1 flex flex-col">
-                                    <h3 className="font-bold text-lg text-gray-900 dark:text-white mb-1 truncate" title={property.title}>{property.title}</h3>
-                                    <p className="text-gray-500 dark:text-gray-400 text-sm mb-4 truncate flex items-center gap-1">
-                                        <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                                        </svg>
-                                        {property.address}
+                                {/* Content */}
+                                <div className="p-4 sm:p-5 flex-1 flex flex-col">
+                                    <h3 className="font-bold text-base text-gray-900 dark:text-white mb-1 truncate">{property.title}</h3>
+                                    <p className="text-gray-400 text-xs mb-3 truncate flex items-center gap-1">
+                                        <MapPin size={12} className="shrink-0" /> {property.address}
                                     </p>
 
-                                    <div className="flex items-center justify-between mt-auto mb-5">
-                                        <p className="text-xl font-extrabold text-primary-600 dark:text-primary-400">
-                                            ₹{property.price.toLocaleString()}
-                                        </p>
-                                        <div className="flex items-center gap-3 text-sm font-medium text-gray-600 dark:text-gray-300">
-                                            <span className="flex items-center gap-1"><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg> {property.bedrooms}</span>
-                                            <span className="flex items-center gap-1"><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg> {property.bathrooms}</span>
+                                    <div className="flex items-center justify-between mt-auto mb-4">
+                                        <p className="text-lg font-extrabold text-primary-600 dark:text-primary-400">₹{property.price.toLocaleString()}</p>
+                                        <div className="flex items-center gap-2.5 text-xs font-medium text-gray-500">
+                                            <span>{property.bedrooms} Bed</span>
+                                            <span>{property.bathrooms} Bath</span>
                                         </div>
                                     </div>
 
-                                    <div className="grid grid-cols-2 lg:grid-cols-3 gap-2 border-t border-gray-100 dark:border-gray-800/80 pt-4">
-                                        <button
-                                            onClick={() => router.push(`/owner/properties/${property._id}/edit`)}
-                                            className="px-3 py-2 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg transition-colors text-sm font-medium flex items-center justify-center gap-1.5 border border-gray-200 dark:border-gray-700"
-                                        >
-                                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
-                                            Edit
+                                    {/* Actions */}
+                                    <div className="grid grid-cols-3 gap-1.5 pt-3.5 border-t border-gray-100 dark:border-gray-800/50">
+                                        <button onClick={() => router.push(`/owner/properties/${property._id}/edit`)} className="btn-ghost text-xs py-2 flex items-center justify-center gap-1 border border-gray-200 dark:border-gray-800 rounded-xl">
+                                            <Edit3 size={13} /> Edit
                                         </button>
-                                        <button
-                                            onClick={() => toggleAvailability(property._id)}
-                                            className="px-3 py-2 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg transition-colors text-sm font-medium flex items-center justify-center border border-gray-200 dark:border-gray-700 whitespace-nowrap"
-                                        >
-                                            {property.available ? 'Hide' : 'Show'}
+                                        <button onClick={() => toggleAvailability(property._id)} className="btn-ghost text-xs py-2 flex items-center justify-center gap-1 border border-gray-200 dark:border-gray-800 rounded-xl">
+                                            {property.available ? <><EyeOff size={13} /> Hide</> : <><Eye size={13} /> Show</>}
                                         </button>
-                                        <button
-                                            onClick={() => handleDelete(property._id)}
-                                            className="col-span-2 lg:col-span-1 px-3 py-2 bg-red-50 dark:bg-red-900/10 hover:bg-red-100 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg transition-colors text-sm font-medium flex items-center justify-center gap-1.5 border border-red-100 dark:border-red-900/30"
-                                        >
-                                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                                            <span className="lg:hidden">Delete</span>
+                                        <button onClick={() => handleDelete(property._id)} className="btn-ghost text-xs py-2 flex items-center justify-center gap-1 border border-red-100 dark:border-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-xl">
+                                            <Trash2 size={13} />
                                         </button>
                                     </div>
                                 </div>
-                            </div>
+                            </motion.div>
                         ))}
                     </div>
                 )}
@@ -288,10 +198,9 @@ function DashboardContent() {
     );
 }
 
+// Import MapPin here since it's used in the property card
+import { MapPin } from 'lucide-react';
+
 export default function OwnerDashboard() {
-    return (
-        <ProtectedRoute requiredRole="owner">
-            <DashboardContent />
-        </ProtectedRoute>
-    );
+    return <ProtectedRoute requiredRole="owner"><DashboardContent /></ProtectedRoute>;
 }

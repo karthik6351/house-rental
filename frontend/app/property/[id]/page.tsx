@@ -10,34 +10,18 @@ import dynamic from 'next/dynamic';
 import ReviewSection from '@/components/ReviewSection';
 import FavoriteButton from '@/components/FavoriteButton';
 import ShareButton from '@/components/ShareButton';
-import { MapPin, Bed, Bath, Maximize2, Star, CheckCircle2, ArrowLeft, Phone, Mail, Home, ShieldCheck, Heart, MessageCircle } from 'lucide-react';
+import { MapPin, Bed, Bath, Maximize2, Star, CheckCircle2, ArrowLeft, Phone, Mail, Home, ShieldCheck, MessageCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const PropertyMap = dynamic(() => import('@/components/PropertyMap'), { ssr: false });
 
 interface Property {
-    _id: string;
-    title: string;
-    description: string;
-    price: number;
-    bedrooms: number;
-    bathrooms: number;
-    area: number;
-    address: string;
-    furnishing: string;
-    images: string[];
-    available: boolean;
-    location: {
-        coordinates: [number, number];
-    };
-    owner: {
-        _id: string;
-        name: string;
-        email: string;
-        phone: string;
-    };
-    averageRating: number;
-    totalReviews: number;
+    _id: string; title: string; description: string; price: number; bedrooms: number;
+    bathrooms: number; area: number; address: string; furnishing: string; images: string[];
+    available: boolean; location: { coordinates: [number, number] };
+    owner: { _id: string; name: string; email: string; phone: string };
+    averageRating: number; totalReviews: number;
+    amenities?: string[]; propertyType?: string; petFriendly?: boolean;
 }
 
 function PropertyDetailContent() {
@@ -51,7 +35,6 @@ function PropertyDetailContent() {
     useEffect(() => {
         if (params.id) {
             fetchProperty();
-            // Increment view count (basic debounce using session storage)
             const viewKey = `viewed_${params.id}`;
             if (!sessionStorage.getItem(viewKey)) {
                 propertyAPI.incrementView(params.id as string)
@@ -67,11 +50,8 @@ function PropertyDetailContent() {
             setProperty(response.data.property);
         } catch (error) {
             console.error('Failed to fetch property:', error);
-            alert('Failed to load property details');
             router.back();
-        } finally {
-            setIsLoading(false);
-        }
+        } finally { setIsLoading(false); }
     };
 
     const handleContactOwner = () => {
@@ -80,10 +60,29 @@ function PropertyDetailContent() {
         }
     };
 
+    const nextImage = () => {
+        if (!property) return;
+        setSelectedImageIndex(prev => (prev + 1) % property.images.length);
+    };
+    const prevImage = () => {
+        if (!property) return;
+        setSelectedImageIndex(prev => prev === 0 ? property.images.length - 1 : prev - 1);
+    };
+
     if (isLoading) {
         return (
-            <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-600"></div>
+            <div className="min-h-screen bg-background-light dark:bg-background-dark pb-24 md:pb-10">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-6">
+                    <div className="skeleton h-[400px] md:h-[500px] rounded-3xl" />
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        <div className="lg:col-span-2 space-y-4">
+                            <div className="skeleton h-8 w-3/4" />
+                            <div className="skeleton h-5 w-1/2" />
+                            <div className="skeleton h-40 rounded-2xl" />
+                        </div>
+                        <div className="skeleton h-64 rounded-2xl" />
+                    </div>
+                </div>
             </div>
         );
     }
@@ -91,289 +90,206 @@ function PropertyDetailContent() {
     if (!property) return null;
 
     return (
-        <div className="min-h-screen bg-gray-50 dark:bg-background-dark pb-20">
-            {/* Top Navigation Bar - Minimal */}
-            <div className="bg-white/80 dark:bg-[#0a0a0b]/80 backdrop-blur-md sticky top-0 z-40 border-b border-gray-200 dark:border-gray-800">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-                    <button
-                        onClick={() => router.back()}
-                        className="flex items-center gap-2 text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors font-medium px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
-                    >
-                        <ArrowLeft className="w-5 h-5" />
-                        <span>Back to Search</span>
-                    </button>
-                    <div className="flex items-center gap-3">
-                        <ShareButton
-                            title={property.title}
-                            text={`Check out this property: ${property.title} at ${property.address}`}
-                        />
-                        {user?.role === 'tenant' && (
-                            <FavoriteButton propertyId={property._id} className="bg-gray-100 dark:bg-gray-800 p-2.5 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition" />
-                        )}
-                    </div>
-                </div>
-            </div>
+        <div className="min-h-screen bg-background-light dark:bg-background-dark pb-24 md:pb-10">
+            <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
+                {/* Back Button */}
+                <button onClick={() => router.back()} className="btn-ghost text-sm flex items-center gap-2 -ml-2 mb-4">
+                    <ArrowLeft size={18} /> Back
+                </button>
 
-            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                {/* Header Information */}
+                {/* Image Gallery */}
                 <div className="mb-8">
-                    <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-4">
+                    {property.images.length > 0 ? (
+                        <div className="relative rounded-3xl overflow-hidden shadow-soft">
+                            <div className="grid grid-cols-1 md:grid-cols-4 gap-1.5 h-[320px] md:h-[480px]">
+                                <div className="md:col-span-3 relative group cursor-pointer overflow-hidden bg-gray-100 dark:bg-gray-800">
+                                    <img
+                                        src={getImageUrl(property.images[selectedImageIndex])}
+                                        alt={property.title}
+                                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                                    />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
+
+                                    {/* Navigation arrows */}
+                                    {property.images.length > 1 && (
+                                        <>
+                                            <button onClick={prevImage} className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/40 backdrop-blur-md text-white rounded-full flex items-center justify-center hover:bg-black/60 transition-all opacity-0 group-hover:opacity-100">
+                                                <ChevronLeft size={20} />
+                                            </button>
+                                            <button onClick={nextImage} className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/40 backdrop-blur-md text-white rounded-full flex items-center justify-center hover:bg-black/60 transition-all opacity-0 group-hover:opacity-100">
+                                                <ChevronRight size={20} />
+                                            </button>
+                                        </>
+                                    )}
+
+                                    {/* Actions */}
+                                    <div className="absolute top-4 right-4 flex items-center gap-2">
+                                        <ShareButton propertyId={property._id} title={property.title} />
+                                        {user?.role === 'tenant' && <FavoriteButton propertyId={property._id} />}
+                                    </div>
+
+                                    {/* Counter */}
+                                    {property.images.length > 1 && (
+                                        <div className="absolute bottom-4 left-4 badge badge-neutral bg-black/50 border-0 backdrop-blur-md text-white text-xs">
+                                            {selectedImageIndex + 1} / {property.images.length}
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Side thumbnails (desktop) */}
+                                <div className="hidden md:flex flex-col gap-1.5">
+                                    {property.images.slice(1, 4).map((image, idx) => (
+                                        <div key={idx} className="relative flex-1 cursor-pointer overflow-hidden group bg-gray-100 dark:bg-gray-800" onClick={() => setSelectedImageIndex(idx + 1)}>
+                                            <img src={getImageUrl(image)} alt={`View ${idx + 2}`} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                                            {idx === 2 && property.images.length > 4 && (
+                                                <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                                                    <span className="text-white font-bold text-lg">+{property.images.length - 4}</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
+                                    {property.images.length < 4 && [...Array(Math.max(0, 3 - (property.images.length - 1)))].map((_, i) => (
+                                        <div key={`empty-${i}`} className="flex-1 bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                                            <Home className="w-8 h-8 text-gray-300 dark:text-gray-600" />
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Mobile Thumbnail Scroller */}
+                            {property.images.length > 1 && (
+                                <div className="flex gap-2 p-3 md:hidden overflow-x-auto scrollbar-hide">
+                                    {property.images.map((image, index) => (
+                                        <button key={index} onClick={() => setSelectedImageIndex(index)} className={`relative h-16 w-20 shrink-0 rounded-xl overflow-hidden transition-all ${selectedImageIndex === index ? 'ring-2 ring-primary-500 opacity-100' : 'opacity-50 hover:opacity-80'}`}>
+                                            <img src={getImageUrl(image)} alt="" className="w-full h-full object-cover" />
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    ) : (
+                        <div className="h-[320px] bg-gray-100 dark:bg-gray-800 rounded-3xl flex items-center justify-center">
+                            <Home className="w-20 h-20 text-gray-300 dark:text-gray-600" />
+                        </div>
+                    )}
+                </div>
+
+                {/* Content Grid */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-10">
+                    {/* Main Content */}
+                    <div className="lg:col-span-2 space-y-8">
+                        {/* Title & Price */}
                         <div>
-                            <div className="flex items-center gap-3 mb-2">
-                                <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${property.available
-                                    ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                                    : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                                    }`}>
-                                    <span className={`w-1.5 h-1.5 rounded-full ${property.available ? 'bg-green-600' : 'bg-red-600'}`}></span>
+                            <div className="flex flex-wrap items-center gap-2 mb-2">
+                                <span className={`badge ${property.available ? 'badge-success' : 'badge-danger'}`}>
                                     {property.available ? 'For Rent' : 'Unavailable'}
                                 </span>
                                 {property.totalReviews > 0 && (
-                                    <span className="flex items-center gap-1 font-semibold text-gray-700 dark:text-gray-300 text-sm bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-lg">
-                                        <Star className="w-4 h-4 fill-yellow-500 text-yellow-500" />
-                                        {property.averageRating.toFixed(1)} <span className="text-gray-500 font-normal">({property.totalReviews} reviews)</span>
+                                    <span className="badge badge-neutral">
+                                        <Star size={12} className="fill-amber-400 text-amber-400" />
+                                        {property.averageRating.toFixed(1)} ({property.totalReviews})
                                     </span>
                                 )}
                             </div>
-                            <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 dark:text-white mb-2 leading-tight">
-                                {property.title}
-                            </h1>
-                            <p className="text-gray-600 dark:text-gray-400 flex items-center gap-2 text-lg">
-                                <MapPin className="w-5 h-5 text-primary-500" />
-                                {property.address}
-                            </p>
+                            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-gray-900 dark:text-white mb-2 tracking-tight leading-tight">{property.title}</h1>
+                            <p className="text-gray-500 dark:text-gray-400 flex items-center gap-1.5"><MapPin size={16} className="text-primary-500" /> {property.address}</p>
+                            <p className="text-3xl font-extrabold text-primary-600 dark:text-primary-400 mt-3">₹{property.price.toLocaleString()}<span className="text-sm font-medium text-gray-400">/month</span></p>
                         </div>
-                        <div className="flex flex-col items-start md:items-end">
-                            <span className="text-gray-500 dark:text-gray-400 font-medium text-sm tracking-wide uppercase">Monthly Rent</span>
-                            <div className="flex items-baseline gap-1">
-                                <span className="text-4xl font-extrabold text-primary-600 dark:text-primary-400">₹{property.price.toLocaleString()}</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
 
-                {/* Premium Image Gallery */}
-                <div className="mb-12">
-                    {property.images.length > 0 ? (
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 h-[400px] md:h-[500px] rounded-3xl overflow-hidden shadow-sm">
-                            {/* Main Large Image */}
-                            <div className="md:col-span-2 lg:col-span-3 relative h-full group cursor-pointer" onClick={() => setSelectedImageIndex(0)}>
-                                <img
-                                    src={getImageUrl(property.images[0])}
-                                    alt={property.title}
-                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                                />
-                                <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors"></div>
-                            </div>
-
-                            {/* Side Grid */}
-                            <div className="hidden md:flex flex-col gap-4 h-full">
-                                {property.images.slice(1, 3).map((image, idx) => (
-                                    <div key={idx} className="relative h-1/2 group cursor-pointer overflow-hidden rounded-r-none md:rounded-r-none" onClick={() => setSelectedImageIndex(idx + 1)}>
-                                        <img
-                                            src={getImageUrl(image)}
-                                            alt={`${property.title} view ${idx + 2}`}
-                                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                                        />
-                                        <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors"></div>
-                                        {idx === 1 && property.images.length > 3 && (
-                                            <div className="absolute inset-0 bg-black/50 flex items-center justify-center hover:bg-black/40 transition-colors">
-                                                <span className="text-white font-bold text-xl">+{property.images.length - 3} Photos</span>
-                                            </div>
-                                        )}
-                                    </div>
-                                ))}
-                                {property.images.length === 2 && (
-                                    <div className="relative h-1/2 bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-                                        <Home className="w-12 h-12 text-gray-300 dark:text-gray-600 opacity-50" />
-                                    </div>
-                                )}
-                                {property.images.length === 1 && (
-                                    <>
-                                        <div className="relative h-1/2 bg-gray-100 dark:bg-gray-800 flex items-center justify-center border-b border-gray-200 dark:border-gray-700">
-                                            <Home className="w-10 h-10 text-gray-300 dark:text-gray-600 opacity-50" />
-                                        </div>
-                                        <div className="relative h-1/2 bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-                                            <Home className="w-10 h-10 text-gray-300 dark:text-gray-600 opacity-50" />
-                                        </div>
-                                    </>
-                                )}
-                            </div>
-                        </div>
-                    ) : (
-                        <div className="h-[400px] w-full bg-gray-100 dark:bg-gray-800 rounded-3xl flex items-center justify-center">
-                            <Home className="w-24 h-24 text-gray-300 dark:text-gray-600" />
-                        </div>
-                    )}
-
-                    {/* Thumbnail Scroller (Mobile mostly, or for remaining images) */}
-                    {property.images.length > 1 && (
-                        <div className="flex gap-3 overflow-x-auto pb-4 mt-6 scrollbar-hide snap-x">
-                            {property.images.map((image, index) => (
-                                <button
-                                    key={index}
-                                    onClick={() => setSelectedImageIndex(index)}
-                                    className={`relative h-20 w-28 flex-shrink-0 rounded-xl overflow-hidden snap-center transition-all ${selectedImageIndex === index
-                                        ? 'ring-2 ring-primary-600 scale-100'
-                                        : 'opacity-60 hover:opacity-100 hover:scale-95'
-                                        }`}
-                                >
-                                    <img
-                                        src={getImageUrl(image)}
-                                        alt={`Thumbnail ${index + 1}`}
-                                        className="w-full h-full object-cover"
-                                    />
-                                </button>
+                        {/* Features Bar */}
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                            {[
+                                { icon: Bed, label: 'Bedrooms', value: property.bedrooms },
+                                { icon: Bath, label: 'Bathrooms', value: property.bathrooms },
+                                { icon: Maximize2, label: 'Area', value: `${property.area} sqft` },
+                                { icon: ShieldCheck, label: 'Furnishing', value: property.furnishing?.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') || 'N/A' },
+                            ].map(f => (
+                                <div key={f.label} className="card p-4 text-center hover:translate-y-0 hover:shadow-sm">
+                                    <f.icon size={20} className="mx-auto text-gray-400 mb-2" />
+                                    <p className="font-bold text-gray-900 dark:text-white text-sm">{f.value}</p>
+                                    <p className="text-[10px] text-gray-400 uppercase tracking-wider font-medium">{f.label}</p>
+                                </div>
                             ))}
-                        </div>
-                    )}
-                </div>
-
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-                    {/* Main Content (Left Side) */}
-                    <div className="lg:col-span-2 space-y-10">
-                        {/* Highlights/Features Bar */}
-                        <div className="flex flex-wrap items-center gap-6 py-6 border-y border-gray-200 dark:border-gray-800">
-                            <div className="flex items-center gap-3">
-                                <Bed className="w-6 h-6 text-gray-400" />
-                                <div>
-                                    <p className="font-bold text-gray-900 dark:text-white">{property.bedrooms} Beds</p>
-                                </div>
-                            </div>
-                            <div className="w-px h-10 bg-gray-200 dark:bg-gray-800 hidden sm:block"></div>
-                            <div className="flex items-center gap-3">
-                                <Bath className="w-6 h-6 text-gray-400" />
-                                <div>
-                                    <p className="font-bold text-gray-900 dark:text-white">{property.bathrooms} Baths</p>
-                                </div>
-                            </div>
-                            <div className="w-px h-10 bg-gray-200 dark:bg-gray-800 hidden sm:block"></div>
-                            <div className="flex items-center gap-3">
-                                <Maximize2 className="w-6 h-6 text-gray-400" />
-                                <div>
-                                    <p className="font-bold text-gray-900 dark:text-white">{property.area} <span className="text-sm font-normal text-gray-500">sqft</span></p>
-                                </div>
-                            </div>
-                            <div className="w-px h-10 bg-gray-200 dark:bg-gray-800 hidden sm:block"></div>
-                            <div className="flex items-center gap-3">
-                                <ShieldCheck className="w-6 h-6 text-gray-400" />
-                                <div>
-                                    <p className="font-bold text-gray-900 dark:text-white capitalize">{property.furnishing}</p>
-                                </div>
-                            </div>
                         </div>
 
                         {/* Description */}
                         <div>
-                            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">About this property</h2>
-                            <div className="prose prose-lg dark:prose-invert max-w-none text-gray-600 dark:text-gray-400 leading-relaxed">
-                                {property.description.split('\n').map((paragraph, idx) => (
-                                    <p key={idx} className="mb-4">{paragraph}</p>
-                                ))}
+                            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-3">About this property</h2>
+                            <div className="text-gray-600 dark:text-gray-400 leading-relaxed text-sm space-y-3">
+                                {property.description.split('\n').map((p, i) => <p key={i}>{p}</p>)}
                             </div>
                         </div>
 
-                        {/* Amenities Box */}
-                        <div className="bg-gray-50 dark:bg-[#121214] border border-gray-200 dark:border-gray-800 rounded-3xl p-6 md:p-8">
-                            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">What this place offers</h2>
-                            <div className="grid grid-cols-2 md:grid-cols-3 gap-y-6 gap-x-4">
-                                {['High-speed WiFi', 'Dedicated Workspace', 'Free Parking', 'Air Conditioning', 'Fully Equipped Kitchen', 'Washing Machine', 'Smart TV', '24/7 Security'].map((amenity, idx) => (
-                                    <div key={idx} className="flex items-center gap-3 text-gray-700 dark:text-gray-300">
-                                        <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0" />
-                                        <span>{amenity}</span>
+                        {/* Amenities */}
+                        <div className="card p-6 hover:translate-y-0 hover:shadow-sm">
+                            <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4">What this place offers</h2>
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                {(property.amenities || ['WiFi', 'Parking', 'AC', 'Kitchen', 'Washing Machine', '24/7 Security']).map((amenity, idx) => (
+                                    <div key={idx} className="flex items-center gap-2.5 text-sm text-gray-700 dark:text-gray-300">
+                                        <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />
+                                        <span>{typeof amenity === 'string' ? amenity.charAt(0).toUpperCase() + amenity.slice(1) : amenity}</span>
                                     </div>
                                 ))}
                             </div>
                         </div>
 
-                        {/* Location Map */}
+                        {/* Map */}
                         <div>
-                            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Where you'll be</h2>
-                            <p className="text-gray-600 dark:text-gray-400 mb-6">{property.address}</p>
-                            <div className="h-[400px] rounded-3xl overflow-hidden border border-gray-200 dark:border-gray-800 shadow-sm relative z-0">
+                            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-3">Location</h2>
+                            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4 flex items-center gap-1"><MapPin size={14} /> {property.address}</p>
+                            <div className="h-[300px] md:h-[350px] rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 relative z-0">
                                 <PropertyMap properties={[property]} center={{ lat: property.location.coordinates[1], lng: property.location.coordinates[0] }} />
                             </div>
                         </div>
 
-                        {/* Reviews Section */}
-                        <div className="pt-8 border-t border-gray-200 dark:border-gray-800">
-                            <ReviewSection
-                                propertyId={property._id}
-                                averageRating={property.averageRating}
-                                totalReviews={property.totalReviews}
-                            />
+                        {/* Reviews */}
+                        <div className="pt-6 border-t border-gray-100 dark:border-gray-800/50">
+                            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-5">Reviews</h2>
+                            <ReviewSection propertyId={property._id} ownerId={property.owner._id} />
                         </div>
                     </div>
 
-                    {/* Sidebar - Owner Info & Actions */}
+                    {/* Sidebar */}
                     <div className="lg:col-span-1">
-                        <div className="sticky top-32 space-y-6">
+                        <div className="sticky top-24 space-y-5">
                             {/* Host Card */}
-                            <div className="bg-white dark:bg-[#1C1C1F] border border-gray-200 dark:border-gray-800 rounded-3xl p-6 shadow-sm">
-                                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-6">Meet your host</h3>
-
-                                <div className="flex items-center gap-4 mb-6">
-                                    <div className="w-16 h-16 bg-gradient-to-br from-primary-400 to-primary-600 rounded-full flex items-center justify-center text-white text-2xl font-bold shadow-md">
+                            <div className="card p-6 hover:translate-y-0 hover:shadow-sm">
+                                <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-4 uppercase tracking-wider">Property Owner</h3>
+                                <div className="flex items-center gap-3.5 mb-5">
+                                    <div className="w-14 h-14 bg-gradient-to-br from-primary-400 to-secondary-500 rounded-full flex items-center justify-center text-white text-xl font-bold shadow-lg">
                                         {property.owner.name.charAt(0).toUpperCase()}
                                     </div>
                                     <div>
-                                        <p className="font-bold text-gray-900 dark:text-white text-lg">{property.owner.name}</p>
-                                        <div className="flex items-center gap-1 text-sm text-gray-500">
-                                            <ShieldCheck className="w-4 h-4 text-green-500" />
-                                            <span>Identity verified</span>
+                                        <p className="font-bold text-gray-900 dark:text-white">{property.owner.name}</p>
+                                        <div className="flex items-center gap-1 text-xs text-emerald-600">
+                                            <ShieldCheck size={13} /> Verified
                                         </div>
                                     </div>
                                 </div>
-
-                                <div className="space-y-4 mb-8">
-                                    <div className="flex items-center gap-3 text-gray-600 dark:text-gray-300">
-                                        <Mail className="w-5 h-5 text-gray-400" />
-                                        <span>{property.owner.email}</span>
-                                    </div>
-                                    <div className="flex items-center gap-3 text-gray-600 dark:text-gray-300">
-                                        <Phone className="w-5 h-5 text-gray-400" />
-                                        <span>{property.owner.phone}</span>
-                                    </div>
+                                <div className="space-y-3 text-sm text-gray-600 dark:text-gray-400 mb-5">
+                                    <div className="flex items-center gap-2.5"><Mail size={15} className="text-gray-400" />{property.owner.email}</div>
+                                    <div className="flex items-center gap-2.5"><Phone size={15} className="text-gray-400" />{property.owner.phone}</div>
                                 </div>
-
                                 {user?.role === 'tenant' && property.available ? (
-                                    <button
-                                        onClick={handleContactOwner}
-                                        className="w-full bg-gray-900 hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-100 text-white dark:text-gray-900 text-base font-bold py-4 rounded-xl transition-colors flex items-center justify-center gap-2 shadow-sm"
-                                    >
-                                        <MessageCircle className="w-5 h-5" />
-                                        Message Host
+                                    <button onClick={handleContactOwner} className="w-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-100 font-bold py-3.5 rounded-2xl flex items-center justify-center gap-2 transition-colors">
+                                        <MessageCircle size={18} /> Message Owner
                                     </button>
                                 ) : !property.available && (
-                                    <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50 text-red-700 dark:text-red-400 p-4 rounded-xl text-center font-medium">
+                                    <div className="bg-red-50 dark:bg-red-900/15 border border-red-200 dark:border-red-800/30 text-red-600 dark:text-red-400 p-3.5 rounded-2xl text-center text-sm font-semibold">
                                         Currently Unavailable
                                     </div>
                                 )}
                             </div>
 
-                            {/* Safety info or highlights */}
-                            <div className="bg-white dark:bg-[#1C1C1F] border border-gray-200 dark:border-gray-800 rounded-3xl p-6 shadow-sm">
-                                <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-4 uppercase tracking-wider">Safety & Property rules</h3>
-                                <ul className="space-y-3 text-sm text-gray-600 dark:text-gray-400">
-                                    <li className="flex items-start gap-2">
-                                        <span className="text-primary-500 mt-0.5">•</span>
-                                        <span>No smoking inside the property</span>
-                                    </li>
-                                    <li className="flex items-start gap-2">
-                                        <span className="text-primary-500 mt-0.5">•</span>
-                                        <span>Pets allowed (with prior approval)</span>
-                                    </li>
-                                    <li className="flex items-start gap-2">
-                                        <span className="text-primary-500 mt-0.5">•</span>
-                                        <span>Security deposit required</span>
-                                    </li>
+                            {/* Rules */}
+                            <div className="card p-6 hover:translate-y-0 hover:shadow-sm">
+                                <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-3 uppercase tracking-wider">Property Rules</h3>
+                                <ul className="space-y-2.5 text-sm text-gray-600 dark:text-gray-400">
+                                    {['No smoking inside', 'Pets with approval', 'Security deposit required'].map((rule, i) => (
+                                        <li key={i} className="flex items-start gap-2"><span className="w-1.5 h-1.5 rounded-full bg-primary-500 mt-1.5 shrink-0" />{rule}</li>
+                                    ))}
                                 </ul>
                             </div>
-
-                            {/* Report Listing */}
-                            <button className="text-gray-500 dark:text-gray-400 text-sm font-medium flex items-center justify-center gap-2 w-full hover:text-gray-900 dark:hover:text-white transition-colors">
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9" /></svg>
-                                Report this listing
-                            </button>
                         </div>
                     </div>
                 </div>
@@ -383,9 +299,5 @@ function PropertyDetailContent() {
 }
 
 export default function PropertyDetail() {
-    return (
-        <ProtectedRoute>
-            <PropertyDetailContent />
-        </ProtectedRoute>
-    );
+    return <ProtectedRoute><PropertyDetailContent /></ProtectedRoute>;
 }

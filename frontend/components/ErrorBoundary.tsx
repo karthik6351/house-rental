@@ -1,67 +1,55 @@
 'use client';
 
-import React, { Component, ErrorInfo, ReactNode } from 'react';
+import React from 'react';
+import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
+import Link from 'next/link';
 
-interface Props {
-    children: ReactNode;
-    fallback?: ReactNode;
-}
-
-interface State {
+interface ErrorBoundaryState {
     hasError: boolean;
     error: Error | null;
 }
 
-class ErrorBoundary extends Component<Props, State> {
-    constructor(props: Props) {
+export default class ErrorBoundary extends React.Component<
+    { children: React.ReactNode },
+    ErrorBoundaryState
+> {
+    constructor(props: { children: React.ReactNode }) {
         super(props);
-        this.state = {
-            hasError: false,
-            error: null
-        };
+        this.state = { hasError: false, error: null };
     }
 
-    static getDerivedStateFromError(error: Error): State {
-        return {
-            hasError: true,
-            error
-        };
+    static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+        return { hasError: true, error };
     }
 
-    componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-        console.error('Error caught by boundary:', error, errorInfo);
+    componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+        console.error('ErrorBoundary caught an error:', error, errorInfo);
     }
 
     render() {
         if (this.state.hasError) {
-            if (this.props.fallback) {
-                return this.props.fallback;
-            }
-
             return (
-                <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-dark via-accent-purple to-accent-blue p-4">
-                    <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 max-w-md w-full border border-white/20 shadow-2xl">
-                        <div className="text-center">
-                            <div className="text-6xl mb-4">⚠️</div>
-                            <h1 className="text-2xl font-bold text-white mb-4">
-                                Something went wrong
-                            </h1>
-                            <p className="text-white/80 mb-6">
-                                We're sorry, but something unexpected happened. Please try refreshing the page.
-                            </p>
-                            {this.state.error && process.env.NODE_ENV === 'development' && (
-                                <div className="bg-red-500/20 border border-red-500/30 rounded-lg p-4 mb-6 text-left">
-                                    <p className="text-red-200 text-sm font-mono">
-                                        {this.state.error.message}
-                                    </p>
-                                </div>
-                            )}
+                <div className="min-h-screen flex items-center justify-center bg-background-light dark:bg-background-dark p-6">
+                    <div className="text-center max-w-md">
+                        <div className="w-20 h-20 bg-red-50 dark:bg-red-900/15 rounded-3xl flex items-center justify-center mx-auto mb-6">
+                            <AlertTriangle className="w-10 h-10 text-red-500" />
+                        </div>
+                        <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Something went wrong</h1>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-8 leading-relaxed">
+                            We encountered an unexpected error. Please try again or return to the home page.
+                        </p>
+                        <div className="flex items-center justify-center gap-3">
                             <button
-                                onClick={() => window.location.reload()}
-                                className="bg-gradient-to-r from-accent-blue to-accent-purple text-white px-6 py-3 rounded-lg font-semibold hover:scale-105 transition-transform duration-200"
+                                onClick={() => { this.setState({ hasError: false, error: null }); window.location.reload(); }}
+                                className="btn-primary text-sm flex items-center gap-2"
                             >
-                                Refresh Page
+                                <RefreshCw size={16} />
+                                Try Again
                             </button>
+                            <Link href="/" className="btn-secondary text-sm flex items-center gap-2">
+                                <Home size={16} />
+                                Home
+                            </Link>
                         </div>
                     </div>
                 </div>
@@ -71,5 +59,3 @@ class ErrorBoundary extends Component<Props, State> {
         return this.props.children;
     }
 }
-
-export default ErrorBoundary;

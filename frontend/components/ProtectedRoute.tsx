@@ -1,61 +1,56 @@
 'use client';
 
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useRouter, usePathname } from 'next/navigation';
+import { motion } from 'framer-motion';
+import Image from 'next/image';
 
 interface ProtectedRouteProps {
     children: React.ReactNode;
-    requiredRole?: 'owner' | 'tenant';
-    allowedRoles?: ('owner' | 'tenant')[];
+    requiredRole?: 'owner' | 'tenant' | 'admin';
 }
 
-export default function ProtectedRoute({ children, requiredRole, allowedRoles }: ProtectedRouteProps) {
-    const router = useRouter();
+export default function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) {
     const { user, isLoading } = useAuth();
+    const router = useRouter();
+    const pathname = usePathname();
 
-    useEffect(() => {
-        if (!isLoading) {
-            if (!user) {
-                router.push('/login');
-            } else {
-                // Check requiredRole OR allowedRoles
-                const hasAccess =
-                    (!requiredRole && !allowedRoles) ||
-                    (requiredRole && user.role === requiredRole) ||
-                    (allowedRoles && allowedRoles.includes(user.role));
-
-                if (!hasAccess) {
-                    // Redirect to appropriate dashboard based on role
-                    if (user.role === 'owner') {
-                        router.push('/owner/dashboard');
-                    } else {
-                        router.push('/tenant/search');
-                    }
-                }
-            }
+    React.useEffect(() => {
+        if (!isLoading && !user) {
+            router.push('/login');
         }
-    }, [user, isLoading, requiredRole, allowedRoles, router]);
+        if (!isLoading && user && requiredRole && user.role !== requiredRole && user.role !== 'admin') {
+            router.push('/');
+        }
+    }, [user, isLoading, requiredRole, router]);
 
-    // Show loading state
-    if (isLoading) {
+    if (isLoading || !user) {
         return (
-            <div className="flex items-center justify-center min-h-screen">
-                <div className="text-center">
-                    <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-primary-600 mx-auto"></div>
-                    <p className="mt-4 text-gray-600">Loading...</p>
-                </div>
+            <div className="min-h-screen bg-background-light dark:bg-background-dark flex items-center justify-center">
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="text-center space-y-4"
+                >
+                    <div className="relative w-16 h-16 mx-auto">
+                        <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-primary-500 to-secondary-500 animate-pulse" />
+                        <div className="absolute inset-1 rounded-[14px] bg-white dark:bg-[#131316] flex items-center justify-center">
+                            <Image src="/logo.png" alt="EasyRent" width={32} height={32} className="rounded-lg" />
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-1.5 justify-center">
+                        <div className="w-2 h-2 bg-primary-500 rounded-full animate-bounce [animation-delay:0ms]" />
+                        <div className="w-2 h-2 bg-primary-500 rounded-full animate-bounce [animation-delay:150ms]" />
+                        <div className="w-2 h-2 bg-primary-500 rounded-full animate-bounce [animation-delay:300ms]" />
+                    </div>
+                    <p className="text-sm text-gray-400 font-medium">Loading...</p>
+                </motion.div>
             </div>
         );
     }
 
-    // Show nothing while redirecting
-    const hasAccess =
-        (!requiredRole && !allowedRoles) ||
-        (requiredRole && user?.role === requiredRole) ||
-        (allowedRoles && user && allowedRoles.includes(user.role));
-
-    if (!user || !hasAccess) {
+    if (requiredRole && user.role !== requiredRole && user.role !== 'admin') {
         return null;
     }
 

@@ -1,116 +1,134 @@
-import { Home, MessageCircle } from 'lucide-react';
+'use client';
+
+import React from 'react';
+import { MessageCircle, User } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 interface Conversation {
     _id: string;
-    property: {
-        _id: string;
-        title: string;
-        images: string[];
-    };
-    otherUser: {
-        _id: string;
-        name: string;
-    };
-    lastMessage?: {
-        content: string;
-        createdAt: string;
-    };
-    unreadCount: number;
+    participants: { _id: string; name: string; email: string }[];
+    property?: { _id: string; title: string };
+    lastMessage?: { content: string; createdAt: string; sender: string };
+    unreadCount?: number;
 }
 
 interface ConversationListProps {
     conversations: Conversation[];
-    selectedPropertyId: string | null;
-    onSelectConversation: (propertyId: string, userId: string) => void;
+    activeConversation: string | null;
+    currentUserId: string;
+    onSelectConversation: (conversation: Conversation) => void;
+    isLoading?: boolean;
 }
 
 export default function ConversationList({
     conversations,
-    selectedPropertyId,
-    onSelectConversation
+    activeConversation,
+    currentUserId,
+    onSelectConversation,
+    isLoading,
 }: ConversationListProps) {
+    const getOtherParticipant = (conversation: Conversation) => {
+        return conversation.participants.find(p => p._id !== currentUserId) || conversation.participants[0];
+    };
+
+    const getTimeDisplay = (dateStr: string) => {
+        const date = new Date(dateStr);
+        const now = new Date();
+        const diff = now.getTime() - date.getTime();
+        const hours = diff / (1000 * 60 * 60);
+        if (hours < 24) return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        if (hours < 168) return date.toLocaleDateString([], { weekday: 'short' });
+        return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+    };
+
+    if (isLoading) {
+        return (
+            <div className="p-3 space-y-2">
+                {[1, 2, 3, 4].map(i => (
+                    <div key={i} className="flex items-center gap-3 p-3 rounded-xl">
+                        <div className="skeleton w-12 h-12 rounded-full shrink-0" />
+                        <div className="flex-1 space-y-2">
+                            <div className="skeleton h-4 w-24" />
+                            <div className="skeleton h-3 w-40" />
+                        </div>
+                    </div>
+                ))}
+            </div>
+        );
+    }
+
     if (conversations.length === 0) {
         return (
-            <div className="flex flex-col items-center justify-center h-full text-gray-400 dark:text-gray-500 p-8">
-                <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4">
-                    <MessageCircle className="w-8 h-8" />
+            <div className="flex-1 flex items-center justify-center p-6">
+                <div className="text-center">
+                    <div className="w-14 h-14 bg-gray-100 dark:bg-gray-800 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                        <MessageCircle className="w-6 h-6 text-gray-400" />
+                    </div>
+                    <p className="font-semibold text-gray-900 dark:text-white text-sm mb-1">No conversations</p>
+                    <p className="text-xs text-gray-500">Start chatting with property owners or tenants</p>
                 </div>
-                <p className="text-lg font-bold text-gray-900 dark:text-white">No conversations yet</p>
-                <p className="text-sm mt-2 text-center max-w-[200px]">
-                    Start chatting about properties to see them here.
-                </p>
             </div>
         );
     }
 
     return (
-        <div className="divide-y divide-gray-100 dark:divide-gray-800/60">
-            {conversations.map((conversation) => (
-                <div
-                    key={conversation._id}
-                    onClick={() => onSelectConversation(conversation.property._id, conversation.otherUser._id)}
-                    className={`p-4 cursor-pointer transition-all hover:bg-gray-50 dark:hover:bg-[#121214] relative ${selectedPropertyId === conversation.property._id ? 'bg-primary-50/50 dark:bg-primary-900/10' : ''
-                        }`}
-                >
-                    {/* Active Indicator */}
-                    {selectedPropertyId === conversation.property._id && (
-                        <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary-600 dark:bg-primary-500 rounded-r-full"></div>
-                    )}
+        <div className="overflow-y-auto flex-1">
+            <div className="p-2 space-y-0.5">
+                {conversations.map((conversation) => {
+                    const other = getOtherParticipant(conversation);
+                    const isActive = activeConversation === conversation._id;
 
-                    <div className="flex items-start space-x-3">
-                        {/* Property Image */}
-                        <div className="flex-shrink-0 relative">
-                            {conversation.property.images && conversation.property.images.length > 0 ? (
-                                <img
-                                    src={conversation.property.images[0]}
-                                    alt={conversation.property.title}
-                                    className="w-14 h-14 rounded-xl object-cover shadow-sm"
-                                />
-                            ) : (
-                                <div className="w-14 h-14 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center shadow-sm">
-                                    <Home className="w-6 h-6 text-gray-400" />
+                    return (
+                        <motion.button
+                            key={conversation._id}
+                            onClick={() => onSelectConversation(conversation)}
+                            className={`w-full flex items-center gap-3 p-3 rounded-2xl text-left transition-all ${isActive
+                                    ? 'bg-primary-50 dark:bg-primary-900/15 border border-primary-200/50 dark:border-primary-800/30'
+                                    : 'hover:bg-gray-50 dark:hover:bg-gray-800/50 border border-transparent'
+                                }`}
+                            whileTap={{ scale: 0.98 }}
+                        >
+                            {/* Avatar */}
+                            <div className="relative shrink-0">
+                                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary-400 to-secondary-500 flex items-center justify-center text-white font-bold text-sm">
+                                    {other.name.charAt(0).toUpperCase()}
                                 </div>
-                            )}
-                            {/* Online Badge Placeholder (Optional) */}
-                            {/* <div className="absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-green-500 border-2 border-white dark:border-[#1C1C1F] rounded-full"></div> */}
-                        </div>
+                                {/* Online indicator */}
+                                <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-500 rounded-full border-2 border-white dark:border-[#131316]" />
+                            </div>
 
-                        {/* Conversation Info */}
-                        <div className="flex-1 min-w-0 pt-0.5">
-                            <div className="flex items-start justify-between">
-                                <div className="flex-1 min-w-0 pr-2">
-                                    <p className="text-sm font-bold text-gray-900 dark:text-white truncate">
-                                        {conversation.property.title}
-                                    </p>
-                                    <p className="text-xs font-medium text-primary-600 dark:text-primary-400 truncate mt-0.5">
-                                        {conversation.otherUser.name}
-                                    </p>
-                                </div>
-                                <div className="flex flex-col items-end gap-1">
+                            {/* Content */}
+                            <div className="flex-1 min-w-0">
+                                <div className="flex items-center justify-between gap-2">
+                                    <h4 className={`text-sm truncate ${isActive ? 'text-primary-700 dark:text-primary-300 font-bold' : 'text-gray-900 dark:text-white font-semibold'}`}>
+                                        {other.name}
+                                    </h4>
                                     {conversation.lastMessage && (
-                                        <p className="text-[10px] font-medium text-gray-400 dark:text-gray-500 whitespace-nowrap">
-                                            {new Date(conversation.lastMessage.createdAt).toLocaleDateString([], {
-                                                month: 'short',
-                                                day: 'numeric'
-                                            })}
-                                        </p>
-                                    )}
-                                    {conversation.unreadCount > 0 && (
-                                        <span className="flex-shrink-0 inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[10px] font-bold text-white bg-primary-600 rounded-full shadow-sm shadow-primary-500/30">
-                                            {conversation.unreadCount}
+                                        <span className="text-[10px] text-gray-400 shrink-0">
+                                            {getTimeDisplay(conversation.lastMessage.createdAt)}
                                         </span>
                                     )}
                                 </div>
-                            </div>
-                            {conversation.lastMessage && (
-                                <p className={`text-sm truncate mt-1 ${conversation.unreadCount > 0 ? 'text-gray-900 dark:text-white font-semibold' : 'text-gray-500 dark:text-gray-400'}`}>
-                                    {conversation.lastMessage.content}
+                                {conversation.property && (
+                                    <p className="text-[10px] text-primary-600/70 dark:text-primary-400/70 font-medium truncate">
+                                        {conversation.property.title}
+                                    </p>
+                                )}
+                                <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">
+                                    {conversation.lastMessage?.content || 'Start a conversation'}
                                 </p>
+                            </div>
+
+                            {/* Unread */}
+                            {(conversation.unreadCount || 0) > 0 && (
+                                <div className="w-5 h-5 bg-primary-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center shrink-0">
+                                    {conversation.unreadCount}
+                                </div>
                             )}
-                        </div>
-                    </div>
-                </div>
-            ))}
+                        </motion.button>
+                    );
+                })}
+            </div>
         </div>
     );
 }

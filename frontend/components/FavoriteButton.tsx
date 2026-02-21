@@ -1,116 +1,98 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Heart } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 import { favoriteAPI } from '@/lib/api';
-import { toast } from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface FavoriteButtonProps {
     propertyId: string;
-    initialIsFavorite?: boolean;
-    onToggle?: (isFavorite: boolean) => void;
+    size?: number;
     className?: string;
 }
 
-export default function FavoriteButton({ propertyId, initialIsFavorite = false, onToggle, className = '' }: FavoriteButtonProps) {
-    const [isFavorite, setIsFavorite] = useState(initialIsFavorite);
+export default function FavoriteButton({ propertyId, size = 20, className = '' }: FavoriteButtonProps) {
+    const { user } = useAuth();
+    const [isFavorited, setIsFavorited] = useState(false);
+    const [isAnimating, setIsAnimating] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
-    const [isHovered, setIsHovered] = useState(false);
 
     useEffect(() => {
-        // If initial state isn't provided/reliable, check it
-        const checkStatus = async () => {
-            try {
-                const response = await favoriteAPI.checkStatus(propertyId);
-                setIsFavorite(response.data.isFavorite);
-            } catch (error) {
-                console.error('Failed to check favorite status', error);
-            }
-        };
+        if (user) checkFavoriteStatus();
+    }, [user, propertyId]);
 
-        // Only check if we strongly suspect we need to (e.g. on detail page)
-        // For lists, we might pass it in. For now, let's play safe and rely on passed props or lazy check
-        // Ideally, lists should pre-fetch this. To avoid API spam, we'll assume prop is correct or check only if unsure.
-        // For this implementation, we'll blindly trust the prop initially, but maybe check if user interaction happens.
-        // Actually, let's trigger a check on mount to be sure, but catch errors silently (e.g., if not logged in)
-        if (localStorage.getItem('token')) {
-            checkStatus();
-        }
-    }, [propertyId]);
+    const checkFavoriteStatus = async () => {
+        try {
+            const response = await favoriteAPI.checkStatus(propertyId);
+            setIsFavorited(response.data.isFavorited);
+        } catch (error) { /* silent */ }
+    };
 
-    const handleToggle = async (e: React.MouseEvent) => {
-        e.preventDefault(); // Prevent navigating to property detail
+    const toggleFavorite = async (e: React.MouseEvent) => {
+        e.preventDefault();
         e.stopPropagation();
-
-        if (isLoading) return;
-
-        // Optimistic update
-        const newState = !isFavorite;
-        setIsFavorite(newState);
+        if (!user || isLoading) return;
         setIsLoading(true);
-
         try {
             await favoriteAPI.toggle(propertyId);
-            if (onToggle) onToggle(newState);
-            toast.success(newState ? 'Added to favorites' : 'Removed from favorites', {
-                position: 'bottom-center',
-                duration: 2000,
-                icon: newState ? '❤️' : '💔',
-                style: {
-                    borderRadius: '10px',
-                    background: '#333',
-                    color: '#fff',
-                },
-            });
-        } catch (error: any) {
-            // Revert on error
-            setIsFavorite(!newState);
-            if (error.response?.status === 401) {
-                toast.error('Please login to save favorites');
-            } else {
-                toast.error('Failed to update favorite');
+            setIsFavorited(!isFavorited);
+            if (!isFavorited) {
+                setIsAnimating(true);
+                setTimeout(() => setIsAnimating(false), 600);
             }
+        } catch (error) {
+            console.error('Failed to toggle favorite:', error);
         } finally {
             setIsLoading(false);
         }
     };
 
+    if (!user) return null;
+
     return (
-        <motion.button
-            onClick={handleToggle}
-            onMouseEnter={() => setIsHovered(true)}
-            onMouseLeave={() => setIsHovered(false)}
-            whileTap={{ scale: 0.8 }}
-            className={`p-2 rounded-full transition-colors ${isFavorite
-                    ? 'bg-red-50 text-red-500 hover:bg-red-100'
-                    : 'bg-white/80 text-gray-400 hover:text-red-500 hover:bg-white'
-                } backdrop-blur-sm shadow-sm ${className}`}
+        <button
+            onClick={toggleFavorite}
             disabled={isLoading}
-            aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
+            className={`relative w-9 h-9 rounded-full flex items-center justify-center transition-all ${isFavorited
+                ? 'bg-red-500 text-white shadow-lg shadow-red-500/30'
+                : 'bg-black/30 backdrop-blur-md text-white hover:bg-black/50'
+                } ${className}`}
+            aria-label={isFavorited ? 'Remove from favorites' : 'Add to favorites'}
         >
-            <AnimatePresence mode='wait'>
-                {isFavorite ? (
-                    <motion.div
-                        key="filled"
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        exit={{ scale: 0 }}
-                        transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-                    >
-                        <Heart className="w-5 h-5 fill-current" />
-                    </motion.div>
-                ) : (
-                    <motion.div
-                        key="outline"
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        exit={{ scale: 0 }}
-                    >
-                        <Heart className="w-5 h-5" />
-                    </motion.div>
+            <motion.div
+                animate={isAnimating ? { scale: [1, 1.4, 1] } : {}}
+                transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+            >
+                <Heart
+                    size={size}
+                    className={isFavorited ? 'fill-current' : ''}
+                    strokeWidth={2}
+                />
+            </motion.div>
+
+            {/* Burst particles on favorite */}
+            <AnimatePresence>
+                {isAnimating && (
+                    <>
+                        {[0, 1, 2, 3, 4, 5].map(i => (
+                            <motion.div
+                                key={i}
+                                initial={{ scale: 0, x: 0, y: 0, opacity: 1 }}
+                                animate={{
+                                    scale: [0, 1, 0],
+                                    x: Math.cos((i * 60 * Math.PI) / 180) * 20,
+                                    y: Math.sin((i * 60 * Math.PI) / 180) * 20,
+                                    opacity: [1, 1, 0],
+                                }}
+                                exit={{ opacity: 0 }}
+                                transition={{ duration: 0.5, delay: i * 0.03 }}
+                                className="absolute w-1.5 h-1.5 rounded-full bg-red-400"
+                            />
+                        ))}
+                    </>
                 )}
             </AnimatePresence>
-        </motion.button>
+        </button>
     );
 }

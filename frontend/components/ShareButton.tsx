@@ -1,73 +1,62 @@
 'use client';
 
-import { Share2, Check, Copy } from 'lucide-react';
-import { useState } from 'react';
+import React from 'react';
+import { Share2, Link2, MessageCircle, Mail, X } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 
 interface ShareButtonProps {
+    propertyId: string;
     title: string;
-    text: string;
-    url?: string;
-    className?: string;
 }
 
-export default function ShareButton({ title, text, url, className = '' }: ShareButtonProps) {
-    const [copied, setCopied] = useState(false);
+export default function ShareButton({ propertyId, title }: ShareButtonProps) {
+    const [isOpen, setIsOpen] = React.useState(false);
+    const shareUrl = typeof window !== 'undefined' ? `${window.location.origin}/property/${propertyId}` : '';
 
-    const handleShare = async () => {
-        const shareUrl = url || window.location.href;
+    const copyLink = async () => {
+        try { await navigator.clipboard.writeText(shareUrl); toast.success('Link copied!'); setIsOpen(false); }
+        catch { toast.error('Failed to copy'); }
+    };
 
-        // Try native share first (Mobile/Tablet)
-        if (navigator.share) {
-            try {
-                await navigator.share({
-                    title,
-                    text,
-                    url: shareUrl,
-                });
-                return;
-            } catch (error) {
-                // User cancelled or share failed, fallback to copy
-                console.log('Share cancelled or failed', error);
-            }
-        }
+    const shareWhatsApp = () => {
+        window.open(`https://wa.me/?text=${encodeURIComponent(`Check out: ${title}\n${shareUrl}`)}`, '_blank');
+        setIsOpen(false);
+    };
 
-        // Fallback to clipboard copy (Desktop)
-        try {
-            await navigator.clipboard.writeText(shareUrl);
-            setCopied(true);
-            toast.success('Link copied to clipboard!', {
-                icon: '🔗',
-                style: {
-                    borderRadius: '10px',
-                    background: '#333',
-                    color: '#fff',
-                },
-            });
-            setTimeout(() => setCopied(false), 2000);
-        } catch (error) {
-            console.error('Failed to copy', error);
-            toast.error('Failed to copy link');
-        }
+    const shareEmail = () => {
+        window.location.href = `mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(shareUrl)}`;
+        setIsOpen(false);
     };
 
     return (
-        <button
-            onClick={handleShare}
-            className={`flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 rounded-lg text-gray-700 dark:text-gray-200 transition-colors ${className}`}
-            title="Share this property"
-        >
-            {copied ? (
-                <>
-                    <Check className="w-5 h-5 text-green-500" />
-                    <span className="text-green-600 dark:text-green-400 font-medium">Copied!</span>
-                </>
-            ) : (
-                <>
-                    <Share2 className="w-5 h-5" />
-                    <span>Share</span>
-                </>
-            )}
-        </button>
+        <div className="relative">
+            <button onClick={() => setIsOpen(!isOpen)} className="w-9 h-9 rounded-full bg-black/30 backdrop-blur-md text-white flex items-center justify-center hover:bg-black/50 transition-all">
+                <Share2 size={18} />
+            </button>
+            <AnimatePresence>
+                {isOpen && (
+                    <>
+                        <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.9, y: 5 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.9, y: 5 }}
+                            className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-[#1a1a1f] rounded-2xl shadow-float border border-gray-200 dark:border-gray-800 z-50 p-1.5"
+                        >
+                            <button onClick={copyLink} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800">
+                                <Link2 size={16} /> Copy Link
+                            </button>
+                            <button onClick={shareWhatsApp} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800">
+                                <MessageCircle size={16} className="text-green-600" /> WhatsApp
+                            </button>
+                            <button onClick={shareEmail} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800">
+                                <Mail size={16} className="text-blue-500" /> Email
+                            </button>
+                        </motion.div>
+                    </>
+                )}
+            </AnimatePresence>
+        </div>
     );
 }

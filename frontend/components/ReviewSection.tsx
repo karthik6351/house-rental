@@ -1,257 +1,195 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { reviewAPI } from '@/lib/api';
+import React, { useState, useEffect } from 'react';
+import { Star, User } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { reviewAPI } from '@/lib/api';
 import StarRating from './StarRating';
+import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 
 interface Review {
     _id: string;
-    tenant: {
-        _id: string;
-        name: string;
-    };
+    user: { _id: string; name: string };
     rating: number;
     comment: string;
     createdAt: string;
-    updatedAt: string;
 }
 
 interface ReviewSectionProps {
     propertyId: string;
-    averageRating: number;
-    totalReviews: number;
+    ownerId: string;
 }
 
-export default function ReviewSection({ propertyId, averageRating, totalReviews }: ReviewSectionProps) {
+export default function ReviewSection({ propertyId, ownerId }: ReviewSectionProps) {
     const { user } = useAuth();
     const [reviews, setReviews] = useState<Review[]>([]);
-    const [myReview, setMyReview] = useState<Review | null>(null);
     const [isLoading, setIsLoading] = useState(true);
-    const [showReviewForm, setShowReviewForm] = useState(false);
-    const [formData, setFormData] = useState({ rating: 5, comment: '' });
+    const [showForm, setShowForm] = useState(false);
+    const [rating, setRating] = useState(0);
+    const [comment, setComment] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    useEffect(() => {
-        fetchReviews();
-        if (user?.role === 'tenant') {
-            fetchMyReview();
-        }
-    }, [propertyId]);
+    useEffect(() => { fetchReviews(); }, [propertyId]);
 
     const fetchReviews = async () => {
         try {
-            const response = await reviewAPI.getPropertyReviews(propertyId, { page: 1, limit: 10 });
+            const response = await reviewAPI.getPropertyReviews(propertyId);
             setReviews(response.data.reviews);
-        } catch (error) {
-            console.error('Failed to fetch reviews:', error);
-        } finally {
-            setIsLoading(false);
-        }
+        } catch (error) { console.error('Failed to fetch reviews:', error); }
+        finally { setIsLoading(false); }
     };
 
-    const fetchMyReview = async () => {
-        try {
-            const response = await reviewAPI.getMyReview(propertyId);
-            setMyReview(response.data.review);
-            setFormData({
-                rating: response.data.review.rating,
-                comment: response.data.review.comment
-            });
-        } catch (error) {
-            // No review yet, that's ok
-            setMyReview(null);
-        }
-    };
-
-    const handleSubmitReview = async (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (rating === 0) { toast.error('Please select a rating'); return; }
         setIsSubmitting(true);
-
         try {
-            if (myReview) {
-                // Update existing review
-                await reviewAPI.update(myReview._id, formData);
-                toast.success('Review updated successfully!');
-            } else {
-                // Create new review
-                await reviewAPI.create({ propertyId, ...formData });
-                toast.success('Review submitted successfully!');
-            }
-
-            setShowReviewForm(false);
+            await reviewAPI.create({ propertyId, rating, comment });
+            toast.success('Review submitted!');
+            setRating(0);
+            setComment('');
+            setShowForm(false);
             fetchReviews();
-            fetchMyReview();
         } catch (error: any) {
             toast.error(error.response?.data?.message || 'Failed to submit review');
-        } finally {
-            setIsSubmitting(false);
-        }
+        } finally { setIsSubmitting(false); }
     };
 
-    const handleDeleteReview = async () => {
-        if (!myReview || !confirm('Are you sure you want to delete your review?')) return;
+    const avg = reviews.length > 0 ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length : 0;
+    const canReview = user && user._id !== ownerId && user.role === 'tenant';
+    const hasReviewed = reviews.some(r => r.user._id === user?._id);
 
-        try {
-            await reviewAPI.delete(myReview._id);
-            toast.success('Review deleted successfully');
-            setMyReview(null);
-            setFormData({ rating: 5, comment: '' });
-            fetchReviews();
-        } catch (error) {
-            toast.error('Failed to delete review');
-        }
-    };
+    // Rating breakdown
+    const breakdown = [5, 4, 3, 2, 1].map(star => ({
+        star,
+        count: reviews.filter(r => r.rating === star).length,
+        percent: reviews.length > 0 ? (reviews.filter(r => r.rating === star).length / reviews.length) * 100 : 0,
+    }));
 
     return (
-        <div className="card">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-                Reviews {totalReviews > 0 && `(${totalReviews})`}
-            </h2>
-
-            {/* Average Rating Summary */}
-            {totalReviews > 0 ? (
-                <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 dark:from-yellow-900/20 dark:to-yellow-800/20 p-6 rounded-lg mb-6">
-                    <div className="flex items-center gap-4">
-                        <div className="text-center">
-                            <p className="text-5xl font-bold text-gray-900 dark:text-white">{averageRating.toFixed(1)}</p>
-                            <StarRating rating={averageRating} readonly size="md" />
-                            <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
-                                {totalReviews} {totalReviews === 1 ? 'review' : 'reviews'}
-                            </p>
-                        </div>
+        <div className="space-y-6">
+            {/* Summary Header */}
+            <div className="flex flex-col md:flex-row gap-6 md:gap-10 items-start">
+                {/* Average Rating */}
+                <div className="text-center md:text-left shrink-0">
+                    <div className="text-5xl font-extrabold text-gray-900 dark:text-white">{avg.toFixed(1)}</div>
+                    <div className="flex items-center justify-center md:justify-start gap-0.5 my-2">
+                        {[1, 2, 3, 4, 5].map(i => (
+                            <Star key={i} size={16} className={i <= Math.round(avg) ? 'fill-amber-400 text-amber-400' : 'text-gray-200 dark:text-gray-700'} />
+                        ))}
                     </div>
+                    <p className="text-sm text-gray-500">{reviews.length} review{reviews.length !== 1 ? 's' : ''}</p>
                 </div>
-            ) : (
-                <div className="bg-gray-50 dark:bg-gray-800 p-6 rounded-lg mb-6 text-center">
-                    <p className="text-gray-600 dark:text-gray-400">No reviews yet. Be the first to review!</p>
-                </div>
-            )}
 
-            {/* Write Review Button (Tenants Only) */}
-            {user?.role === 'tenant' && (
-                <div className="mb-6">
-                    {myReview ? (
-                        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 p-4 rounded-lg">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="text-sm text-blue-800 dark:text-blue-200 font-semibold">
-                                        You've already reviewed this property
-                                    </p>
-                                    <p className="text-xs text-blue-600 dark:text-blue-300 mt-1">
-                                        You can edit or delete your review below
-                                    </p>
+                {/* Breakdown */}
+                {reviews.length > 0 && (
+                    <div className="flex-1 space-y-1.5 w-full max-w-xs">
+                        {breakdown.map(b => (
+                            <div key={b.star} className="flex items-center gap-2.5">
+                                <span className="text-xs text-gray-500 w-3 text-right">{b.star}</span>
+                                <Star size={12} className="text-amber-400 fill-amber-400 shrink-0" />
+                                <div className="flex-1 h-2 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+                                    <div className="h-full bg-amber-400 rounded-full transition-all duration-500" style={{ width: `${b.percent}%` }} />
                                 </div>
-                                <div className="flex gap-2">
-                                    <button
-                                        onClick={() => setShowReviewForm(!showReviewForm)}
-                                        className="btn-outline text-sm py-2"
-                                    >
-                                        {showReviewForm ? 'Cancel' : 'Edit Review'}
-                                    </button>
-                                    <button
-                                        onClick={handleDeleteReview}
-                                        className="px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors text-sm font-medium"
-                                    >
-                                        Delete
-                                    </button>
-                                </div>
+                                <span className="text-[11px] text-gray-400 w-5 text-right">{b.count}</span>
                             </div>
-                        </div>
-                    ) : (
-                        <button
-                            onClick={() => setShowReviewForm(!showReviewForm)}
-                            className="btn-primary"
-                        >
-                            {showReviewForm ? 'Cancel' : 'Write a Review'}
+                        ))}
+                    </div>
+                )}
+            </div>
+
+            {/* Write Review */}
+            {canReview && !hasReviewed && (
+                <div>
+                    {!showForm ? (
+                        <button onClick={() => setShowForm(true)} className="btn-secondary text-sm flex items-center gap-2">
+                            <Star size={16} /> Write a Review
                         </button>
+                    ) : (
+                        <motion.form
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            onSubmit={handleSubmit}
+                            className="card p-5 sm:p-6 space-y-4"
+                        >
+                            <div>
+                                <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 block mb-2">Your Rating</label>
+                                <StarRating value={rating} onChange={setRating} size={28} />
+                            </div>
+                            <div>
+                                <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 block mb-2">Comment (optional)</label>
+                                <textarea
+                                    value={comment}
+                                    onChange={e => setComment(e.target.value)}
+                                    className="input-field resize-none h-24"
+                                    placeholder="Share your experience..."
+                                />
+                            </div>
+                            <div className="flex gap-2">
+                                <button type="submit" disabled={isSubmitting || rating === 0} className="btn-primary text-sm disabled:opacity-50">
+                                    {isSubmitting ? 'Submitting...' : 'Submit Review'}
+                                </button>
+                                <button type="button" onClick={() => setShowForm(false)} className="btn-ghost text-sm">
+                                    Cancel
+                                </button>
+                            </div>
+                        </motion.form>
                     )}
                 </div>
             )}
 
-            {/* Review Form */}
-            {showReviewForm && user?.role === 'tenant' && (
-                <form onSubmit={handleSubmitReview} className="bg-gray-50 dark:bg-gray-800 p-6 rounded-lg mb-6">
-                    <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">
-                        {myReview ? 'Edit Your Review' : 'Write Your Review'}
-                    </h3>
-
-                    <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Rating
-                        </label>
-                        <StarRating
-                            rating={formData.rating}
-                            onRatingChange={(rating) => setFormData({ ...formData, rating })}
-                            size="lg"
-                        />
-                    </div>
-
-                    <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Your Review
-                        </label>
-                        <textarea
-                            value={formData.comment}
-                            onChange={(e) => setFormData({ ...formData, comment: e.target.value })}
-                            required
-                            minLength={10}
-                            maxLength={500}
-                            rows={4}
-                            className="input-field resize-none"
-                            placeholder="Share your experience with this property..."
-                        />
-                        <p className="text-xs text-gray-500 mt-1">{formData.comment.length}/500 characters</p>
-                    </div>
-
-                    <button
-                        type="submit"
-                        disabled={isSubmitting}
-                        className="btn-primary disabled:opacity-50"
-                    >
-                        {isSubmitting ? 'Submitting...' : myReview ? 'Update Review' : 'Submit Review'}
-                    </button>
-                </form>
-            )}
-
             {/* Reviews List */}
-            <div className="space-y-4">
-                {isLoading ? (
-                    <div className="text-center py-8">
-                        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary-600 mx-auto"></div>
-                    </div>
-                ) : reviews.length === 0 ? (
-                    <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                        No reviews yet
-                    </div>
-                ) : (
-                    reviews.map((review) => (
-                        <div
-                            key={review._id}
-                            className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow"
-                        >
-                            <div className="flex items-start justify-between mb-2">
-                                <div>
-                                    <p className="font-semibold text-gray-900 dark:text-white">
-                                        {review.tenant.name}
-                                    </p>
-                                    <StarRating rating={review.rating} readonly size="sm" />
-                                </div>
-                                <p className="text-sm text-gray-500 dark:text-gray-400">
-                                    {new Date(review.createdAt).toLocaleDateString()}
-                                </p>
+            {isLoading ? (
+                <div className="space-y-4">
+                    {[1, 2].map(i => (
+                        <div key={i} className="flex gap-3">
+                            <div className="skeleton w-10 h-10 rounded-full shrink-0" />
+                            <div className="flex-1 space-y-2">
+                                <div className="skeleton h-4 w-24" />
+                                <div className="skeleton h-3 w-48" />
                             </div>
-                            <p className="text-gray-700 dark:text-gray-300">{review.comment}</p>
-                            {review.updatedAt !== review.createdAt && (
-                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 italic">
-                                    (Edited)
-                                </p>
-                            )}
                         </div>
-                    ))
-                )}
-            </div>
+                    ))}
+                </div>
+            ) : reviews.length === 0 ? (
+                <div className="text-center py-8">
+                    <Star className="w-10 h-10 text-gray-200 dark:text-gray-700 mx-auto mb-3" />
+                    <p className="text-sm text-gray-500">No reviews yet. Be the first!</p>
+                </div>
+            ) : (
+                <div className="space-y-4">
+                    {reviews.map((review, i) => (
+                        <motion.div
+                            key={review._id}
+                            initial={{ opacity: 0, y: 8 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: i * 0.05 }}
+                            className="flex gap-3.5"
+                        >
+                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-400 to-secondary-500 flex items-center justify-center text-white font-bold text-sm shrink-0">
+                                {review.user.name.charAt(0).toUpperCase()}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-1">
+                                    <span className="font-semibold text-sm text-gray-900 dark:text-white">{review.user.name}</span>
+                                    <span className="text-[10px] text-gray-400">
+                                        {new Date(review.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                                    </span>
+                                </div>
+                                <div className="flex gap-0.5 mb-1.5">
+                                    {[1, 2, 3, 4, 5].map(s => (
+                                        <Star key={s} size={13} className={s <= review.rating ? 'fill-amber-400 text-amber-400' : 'text-gray-200 dark:text-gray-700'} />
+                                    ))}
+                                </div>
+                                {review.comment && (
+                                    <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">{review.comment}</p>
+                                )}
+                            </div>
+                        </motion.div>
+                    ))}
+                </div>
+            )}
         </div>
     );
 }
