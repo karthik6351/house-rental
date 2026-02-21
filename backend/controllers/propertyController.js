@@ -610,7 +610,7 @@ const restoreProperty = async (req, res) => {
         }
 
         // Verify ownership
-        if (property.owner.toString() !== req.user.userId) {
+        if (property.owner.toString() !== req.user._id.toString()) {
             return res.status(403).json({
                 success: false,
                 message: 'You are not authorized to restore this property'
@@ -652,7 +652,7 @@ const restoreProperty = async (req, res) => {
 // @access  Private (Owner only)
 const getDeletedProperties = async (req, res) => {
     try {
-        const userId = req.user.userId;
+        const userId = req.user._id;
 
         // Find deleted properties owned by user
         const properties = await Property.find({

@@ -33,7 +33,7 @@ const initGridFS = (mediaConn) => {
                             bucketName: 'propertyImages',
                             metadata: {
                                 originalName: file.originalname,
-                                uploadedBy: req.user?.userId,
+                                uploadedBy: req.user?._id,
                                 uploadedAt: new Date()
                             }
                         };
@@ -107,7 +107,7 @@ const optimizeImages = async (req, res, next) => {
             const uploadStream = gridfsBucket.openUploadStream(optimizedFilename, {
                 metadata: {
                     originalName: file.originalname,
-                    uploadedBy: req.user?.userId,
+                    uploadedBy: req.user?._id,
                     uploadedAt: new Date(),
                     optimized: true,
                     originalSize: file.size,

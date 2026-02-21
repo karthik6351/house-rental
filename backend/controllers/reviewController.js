@@ -7,7 +7,7 @@ const Property = require('../models/Property');
 const createReview = async (req, res) => {
     try {
         const { propertyId, rating, comment } = req.body;
-        const tenantId = req.user.userId;
+        const tenantId = req.user._id;
 
         // Validate inputs
         if (!propertyId || !rating || !comment) {
@@ -119,7 +119,7 @@ const updateReview = async (req, res) => {
     try {
         const { id } = req.params;
         const { rating, comment } = req.body;
-        const tenantId = req.user.userId;
+        const tenantId = req.user._id;
 
         const review = await Review.findById(id);
 
@@ -170,7 +170,7 @@ const updateReview = async (req, res) => {
 const deleteReview = async (req, res) => {
     try {
         const { id } = req.params;
-        const tenantId = req.user.userId;
+        const tenantId = req.user._id;
 
         const review = await Review.findById(id);
 
@@ -216,7 +216,7 @@ const deleteReview = async (req, res) => {
 const getMyReview = async (req, res) => {
     try {
         const { propertyId } = req.params;
-        const tenantId = req.user.userId;
+        const tenantId = req.user._id;
 
         const review = await Review.findOne({ property: propertyId, tenant: tenantId })
             .populate('tenant', 'name');
