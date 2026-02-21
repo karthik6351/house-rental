@@ -83,8 +83,13 @@ body {
    ============================================ */
 
 .btn-primary {
-  @apply bg-primary-600 text-white px-6 py-3 rounded-2xl font-semibold hover:bg-primary-500 active:scale-[0.97] shadow-[0_4px_20px_rgba(79, 70, 229, 0.25)] hover:shadow-[0_8px_30px_rgba(79, 70, 229, 0.35)] hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900;
+  @apply bg-primary-600 text-white px-6 py-3 rounded-2xl font-semibold hover:bg-primary-500 active:scale-[0.97] hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900;
+  box-shadow: 0 4px 20px rgba(79, 70, 229, 0.25);
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-primary:hover {
+  box-shadow: 0 8px 30px rgba(79, 70, 229, 0.35);
 }
 
 .btn-secondary {
