@@ -281,6 +281,9 @@ app.use((err, req, res, next) => {
     });
 });
 
+// Ignore favicon.ico requests to prevent 404 errors in the browser
+app.get('/favicon.ico', (req, res) => res.status(204).end());
+
 // 404 handler
 app.use((req, res) => {
     res.status(404).json({

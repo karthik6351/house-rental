@@ -1,7 +1,7 @@
 const multer = require('multer');
 const sharp = require('sharp');
 const mongoose = require('mongoose');
-const { GridFsStorage } = require('multer-gridfs-storage');
+
 const Grid = require('gridfs-stream');
 
 // GridFS setup
@@ -20,28 +20,9 @@ const initGridFS = (mediaConn) => {
         gfs = Grid(conn.db, mongoose.mongo);
         gfs.collection('propertyImages');
 
-        // Initialize storage after connection is established
+        // Initialize storage
         if (!storage) {
-            storage = new GridFsStorage({
-                url: process.env.MONGODB_MEDIA_URI,
-                options: { useNewUrlParser: true, useUnifiedTopology: true },
-                file: (req, file) => {
-                    // Return a Promise for async file metadata generation
-                    return new Promise((resolve, reject) => {
-                        const filename = `${Date.now()}-${file.originalname}`;
-                        const fileInfo = {
-                            filename: filename,
-                            bucketName: 'propertyImages',
-                            metadata: {
-                                originalName: file.originalname,
-                                uploadedBy: req.user?._id,
-                                uploadedAt: new Date()
-                            }
-                        };
-                        resolve(fileInfo);
-                    });
-                }
-            });
+            storage = multer.memoryStorage();
 
             // File filter - only allow images
             const fileFilter = (req, file, cb) => {
@@ -81,15 +62,8 @@ const optimizeImages = async (req, res, next) => {
         const optimizedFileIds = [];
 
         for (const file of req.files) {
-            // Download the file from GridFS
-            const downloadStream = gridfsBucket.openDownloadStream(file.id);
-            const chunks = [];
-
-            for await (const chunk of downloadStream) {
-                chunks.push(chunk);
-            }
-
-            const buffer = Buffer.concat(chunks);
+            // Buffer from memoryStorage
+            const buffer = file.buffer;
 
             // Optimize with Sharp
             const optimizedBuffer = await sharp(buffer)
@@ -100,11 +74,8 @@ const optimizeImages = async (req, res, next) => {
                 .webp({ quality: 85 })
                 .toBuffer();
 
-            // Delete the original file
-            await gridfsBucket.delete(file.id);
-
             // Upload optimized version
-            const optimizedFilename = `optimized-${file.filename.replace(/\.[^/.]+$/, '')}.webp`;
+            const optimizedFilename = `optimized-${Date.now()}-${file.originalname.replace(/\.[^/.]+$/, '')}.webp`;
             const uploadStream = gridfsBucket.openUploadStream(optimizedFilename, {
                 metadata: {
                     originalName: file.originalname,
